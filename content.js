@@ -1,43 +1,15 @@
 /* Native content, faithfully adapted from current-canvas-source.tsx. No network dependencies. */
 (() => {
   "use strict";
-const projects = [
-  { cat: "入门", name: "KimYx0207/AI-Coding-Guide-Zh", note: "中文零基础教程，Codex 和 WorkBuddy 都有学习线和练习", level: "入门", stars: "约6.4k", top: true },
-  { cat: "入门", name: "AlephAITech/WorkBuddyGuide", note: "《WorkBuddy 实战蓝皮书》，办公、会议、文件案例加指令模板", level: "入门", stars: "约3.7k" },
-  { cat: "技能包", name: "anthropics/skills", note: "Anthropic 官方技能库，Word/Excel/PPT/PDF 文件技能，还能自己做技能", level: "入门~进阶", stars: "约18.7万", top: true },
-  { cat: "技能包", name: "jnMetaCode/agency-agents-zh", note: "300+ 个中文 AI 专家角色，有项目管理部和会议纪要专家", level: "入门", stars: "约2.2万" },
-  { cat: "技能包", name: "liuqing0224/interior-design-skills", note: "室内设计全流程 15 个技能，从需求到预算到交付，支持 Codex", level: "进阶", stars: "11（新项目）", top: true },
-  { cat: "MCP", name: "mhyrr/sketchup-mcp", note: "把 SketchUp 接到 AI 上，一句话建模、改材质", level: "进阶", stars: "约530" },
-  { cat: "MCP", name: "laowang-wy/adai-sketchup-skill-mcp", note: "中文作者为 Codex 做的 SketchUp 技能加 MCP（Windows、SU 2018/2019）", level: "进阶·备选", stars: "约90" },
-  { cat: "MCP", name: "ahujasid/mcp-for-blender", note: "AI 控制 Blender，搭白模、调灯光、出氛围图", level: "进阶", stars: "约3.3万" },
-  { cat: "MCP", name: "jingcheng-chen/rhinomcp", note: "Rhino 8 和 Grasshopper 接 AI，做异形和参数化造型", level: "进阶", stars: "约1.2k" },
-  { cat: "效果图", name: "Comfy-Org/ComfyUI", note: "主流开源节点式 AI 生图工具，可本地运行", level: "进阶", stars: "约14.5万" },
-  { cat: "效果图", name: "amir84ferdos/ComfyUI-ArchAi3d-Qwen", note: "室内设计用 ComfyUI 插件，情绪板出图、清理现场、换材质", level: "进阶", stars: "73" },
-];
-const cats = [["全部", "All"], ["入门", "AI 助手入门"], ["技能包", "技能包"], ["MCP", "操作设计软件 MCP"], ["效果图", "AI 出效果图"]];
+const projectsData = window.CYH_PROJECTS || { items: [], cats: [] };
+const projects = projectsData.items || [];
+const projectsUpdated = projectsData.updated || "";
+const cats = projectsData.cats || [["全部", "All"]];
 const P = "https://www.pinterest.com/61c0c5872feda21f4161cef3b6f3d6/";
-const pins = [
-  { t: "ONE THOUSAND", s: "LED 光装置", id: "725361083779457865" },
-  { t: "Refik Anadol", s: "DATALAND", id: "725361083779457864" },
-  { t: "Flux 2023", s: "互动光装置", id: "725361083779457863" },
-  { t: "互动投影沙盘", s: "Interactive projection", id: "725361083779457856" },
-  { t: "Touching the Future", s: "灵巧手", id: "725361083779457815" },
-  { t: "Google 米兰展", s: "Lachlan Turczan", id: "725361083779457777" },
-];
-const boards = [
-  { n: "建筑", c: 35, p: "%E5%BB%BA%E7%AD%91", g: "空间类" },
-  { n: "AGIBOT", c: 34, p: "agibot", g: "空间类" },
-  { n: "展示设计", c: 21, p: "%E5%B1%95%E7%A4%BA%E8%AE%BE%E8%AE%A1", g: "空间类" },
-  { n: "大堂", c: 11, p: "%E5%A4%A7%E5%A0%82", g: "空间类" },
-  { n: "屏风", c: 8, p: "%E5%B1%8F%E9%A3%8E", g: "空间类" },
-  { n: "店铺", c: 1, p: "%E5%BA%97%E9%93%BA", g: "空间类" },
-  { n: "电梯间", c: 1, p: "%E7%94%B5%E6%A2%AF%E9%97%B4", g: "空间类" },
-  { n: "中望", c: 9, p: "%E4%B8%AD%E6%9C%9B", g: "项目类" },
-  { n: "潮流文化", c: 15, p: "%E6%BD%AE%E6%B5%81%E6%96%87%E5%8C%96", g: "文化与艺术" },
-  { n: "插画与海报", c: 1, p: "%E6%8F%92%E5%9B%BE%E4%B8%8E%E6%B5%B7%E6%8A%A5", g: "文化与艺术" },
-];
+const pins = (window.CYH_BOARDS && window.CYH_BOARDS.featured) || [];
+const boards = ((window.CYH_BOARDS && window.CYH_BOARDS.boards) || []).map(b => ({ ...b }));
 // Folder slugs are stable even when a source board uses a different display spelling.
-const boardSlugs = ['architecture', 'agibot', 'exhibition', 'lobby', 'screen', 'store', 'elevator', 'zhongwang', 'street-culture', 'illustration-poster'];
+const boardSlugs = boards.map(b => b.slug);
 const decodeTitle = value => String(value).replace(/&(#x[\da-f]+|#\d+|amp|quot|apos|lt|gt|nbsp);/gi, (entity, code) => {
   if (code[0] !== '#') return ({amp:'&', quot:'"', apos:"'", lt:'<', gt:'>', nbsp:' '})[code.toLowerCase()] || entity;
   const point = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : Number(code.slice(1));
@@ -49,17 +21,11 @@ const allPins = (window.CYH_PIN_MANIFEST || []).filter(pin => boardSlugs.include
 });
 const boardPins = boards.map((board, index) => allPins.filter(pin => pin.boardIndex === index));
 boards.forEach((board, index) => { board.localCount = boardPins[index].length; board.slug = boardSlugs[index]; });
-const plans = [
-  ["空间设计案例库", "按办公、商业、展陈、住宅分，记亮点与可借鉴点"],
-  ["材料与工艺", "材质样板、灯光做法、节点细节"],
-  ["AI 提示词与工具对比", "Codex、WorkBuddy 实际用法"],
-  ["项目管理模板", "进度表、汇报结构、客户沟通"],
-  ["灵感随手记", "想法与好网站"],
-];
-const STORE = "https://cursor.com/canvas/store-7e786459-5757-43f9-8c11-12c7bc1f48d9/";
-const URL03 = STORE + "86d0c0ac-16dc-4553-8f7e-998ec5804c71";
-const URL02 = STORE + "fed40481-b35b-4a84-871d-2854cc594e20";
-const URLALL = STORE + "119bd9c9-5e8d-4121-b1cb-fbcae8d75463";
+const plans = window.CYH_PLANS || [];
+const reviews = (window.CYH_REVIEWS || []).filter(r => r && r.id && r.date);
+const dailies = reviews.filter(r => r.type === "daily");
+const latestDaily = dailies.slice().sort((a, b) => b.date.localeCompare(a.date))[0] || null;
+const reviewsAsc = reviews.slice().sort((a, b) => a.date.localeCompare(b.date) || (a.type === "daily" ? -1 : 1));
 const REPO = "https://github.com/1292974367-netizen/ai-workflow-collection";
 const totalPins = boards.reduce((s, b) => s + b.c, 0);
 
@@ -71,63 +37,43 @@ const C = {
 };
 
 
+// Review moons are derived from data/reviews.js: newest first, latest daily marked LATEST.
+const reviewMoons = reviews.slice().sort((a, b) => b.date.localeCompare(a.date) || (a.type === "daily" ? -1 : 1))
+  .map(r => ({ k: { k: r.id }, label: r.label, sub: r === latestDaily ? "LATEST" : (r.moonSub || ""), done: true }));
 const moons = [
-  { k: { k: "r03" }, label: "11-03 日报", sub: "LATEST", a: -40, pa: -35, done: true },
-  { k: { k: "all" }, label: "11-03 全局梳理", sub: "OVERVIEW", a: 20, pa: 35, done: true },
-  { k: { k: "r02" }, label: "11-02 日报", sub: "补发", a: -110, pa: -145, done: true },
-  { k: { k: "wk" }, label: "周报 11-09", sub: "待生成", a: 110, pa: 145, done: false },
-  { k: { k: "mo" }, label: "月报 12-01", sub: "待生成", a: 170, pa: 90, done: false },
+  ...reviewMoons,
+  { k: { k: "wk" }, label: "周报 11-09", sub: "待生成", done: false, pending: true },
+  { k: { k: "mo" }, label: "月报 12-01", sub: "待生成", done: false, pending: true },
 ];
+/* Orbit angles: first two reviews and pending moons keep the original positions; extra reviews fan out over the left arc. */
+const moonAngles = (() => {
+  const n = reviewMoons.length, out = [];
+  for (let i = 0; i < n; i++) out.push(i === 0 ? -.65 : i === 1 ? .42 : (n === 3 ? -2.3 : -1.25 - (i - 2) * (1.35 / Math.max(1, n - 3))));
+  return [...out, 1.65, 2.9];
+})();
+const hueify = v => Array.isArray(v) ? v.map(hueify) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, hueify(x)])) : (typeof v === "string" && C[v] && !["bg","panel","ink","mute","rule","hair"].includes(v) ? C[v] : v);
+/* Footer totals derived from data. */
+(() => {
+  const el = typeof document !== "undefined" && document.querySelector(".totals");
+  if (!el) return;
+  const pad = n => String(n).padStart(2, "0");
+  const vals = [[pad(dailies.length), "日报", "amber"], [pad(boards.length), "画板", "violet"], [String(allPins.length), "pins", "violet"], [pad(projects.length), "AI 项目", "teal"], [pad(plans.length), "规划", "grey"]];
+  el.setAttribute("aria-label", vals.map(([n, l]) => `${n} ${l}`).join(" · "));
+  el.innerHTML = vals.map(([n, l, c]) => `<span><b class="${c}">${n}</b> ${l}</span>`).join("<i>·</i>");
+})();
 const images = pins.map((_, i) => `assets/pin-${String(i + 1).padStart(2, "0")}.jpg`);
 function getPanel(key, index = 0, cat = "全部") {
   const m = typeof key === "object" ? key : { k: key, i: index };
   if (!m || ((["pin","board","gh","plan"].includes(m.k)) && (!Number.isInteger(m.i) || m.i < 0 || m.i >= ({pin:pins,board:boards,gh:projects,plan:plans}[m.k]).length))) return null;
   if (m.k === "s1") return { hue: C.amber, kicker: "01 · Review", title: "工作复盘", body: [
-    { t: "p", s: "最新：2026-11-03 日报（OB导播）—— 首个完整记录日。周报与月报由另一个助手生成。" },
+    ...(latestDaily ? [{ t: "p", s: `最新：${latestDaily.headline || latestDaily.title}。周报与月报由另一个助手生成。` }] : []),
     { t: "sub", s: "Timeline" },
-    { t: "row", hue: C.amber, lead: "11-02", title: "工作日报 · 2026-11-02", sub: "补发 · 深夜约 70 分钟，启动三个助手", go: { k: "r02" } },
-    { t: "row", hue: C.amber, lead: "11-03", title: "工作日报 · 2026-11-03", sub: "电脑活跃 8.6 小时 · 切换 162 次 · 动手设计 38 分钟", go: { k: "r03" } },
-    { t: "row", hue: C.amber, lead: "11-03", title: "工作全局梳理 · 2026-11-03", sub: "4 个项目 · 5 个 bot · 建议", go: { k: "all" } },
+    ...reviewsAsc.map(r => ({ t: "row", hue: C.amber, lead: r.date.slice(5), title: r.title, sub: r.sub, go: { k: r.id } })),
     { t: "row", hue: C.faint, lead: "11-09", title: "周报", sub: "首份 00:30 生成（北京时间）", go: { k: "wk" } },
     { t: "row", hue: C.faint, lead: "12-01", title: "月报", sub: "首份 00:45 生成（北京时间）", go: { k: "mo" } },
   ] };
-  if (m.k === "r03") return { hue: C.amber, kicker: "Daily Report · OB导播", title: "工作日报 · 2026-11-03", href: URL03, body: [
-    { t: "p", s: "首个完整记录日。电脑活跃 8.6 小时，切换 162 次；Codex 占时最多，动手设计仅 38 分钟。晚上远程到 22:47，另有 22:00 会议。" },
-    { t: "stats", items: [["10:14", "开工（手机）"], ["22:47", "最后操作"], ["8.6h", "电脑活跃", C.amber], ["162", "应用切换"]] },
-    { t: "sub", s: "时间去向 · 按项目（分钟）" },
-    ...([["Codex（项目不明）", 188], ["沟通", 135], ["AGIBOT", 96], ["美的", 36], ["Bot 与工具", 31], ["其他", 22], ["豆包·动线翻译", 18]]).map(([l, v]) => ({ t: "bar", l, v, max: 188, hue: C.amber })),
-    { t: "sub", s: "一天的形状" },
-    { t: "li", items: ["在公司 10:28–12:24、12:58–19:23（午间离开约 34 分钟）", "向日葵远程 20:10–22:47，次日 00:37 断开", "19:00 后 91 分钟 + 22:00 会议", "美的标牌 AI v15 → v21；AGIBOT 4F 模型 v01 → v02"] },
-    { t: "sub", s: "待你处理（状态截至写报告时）" },
-    { t: "li", items: ["P1 回复 Wuj：worken 是什么、五次跨越是什么（Miro）", "P1 验收 4F Blender v02 效果图与俯视图（AGIBOT）", "P1 确认美的标牌 AI v21 对齐是否定稿", "P2 确认 3F 平面已按 Miro 新 layout 更新", "P2 放宽 codex判官截图审批规则", "P3 Pinterest 2 条错存视频；图版是否私密", "P3 每天盯板？装 Excel 技能？"] },
-    { t: "sub", s: "评价" },
-    { t: "kv", k: "做得好", v: "太多就立刻叫停并给硬上限（100 张）；重视落盘位置；多线并行仍在推进" },
-    { t: "kv", k: "留意", v: "162 次切换；动手设计只有 38 分钟（7%）；远程到 22:47" },
-  ] };
-  if (m.k === "r02") return { hue: C.amber, kicker: "Daily Report · 补发", title: "工作日报 · 2026-11-02", href: URL02, body: [
-    { t: "p", s: "补发日报。白天无电脑记录；可见工作为深夜约 70 分钟，启动三个专职助手。" },
-    { t: "stats", items: [["23:59–01:08", "可见时段", C.amber], ["3", "启动助手"], ["57", "AGIBOT 图版（当时）"]] },
-    { t: "sub", s: "深夜协作（分钟）" },
-    { t: "bar", l: "收集者", v: 69, max: 69, hue: C.amber, d: "23:59–01:08" },
-    { t: "bar", l: "Pinterest打野", v: 51, max: 69, hue: C.amber, d: "00:07–00:58" },
-    { t: "kv", k: "OB导播", v: "约 00:32 起；记录器约 00:40 上线" },
-    { t: "sub", s: "AGIBOT 项目" },
-    { t: "kv", k: "地点", v: "上海前滩源 T3" }, { t: "kv", k: "内容", v: "智元 AGIBOT 全球形象总部展厅 · 约 3,715 ㎡" }, { t: "kv", k: "叙事 / 阶段", v: "IT TAKES TWO · 投标第二轮" },
-    { t: "sub", s: "交付" },
-    { t: "li", items: ["收集者：10 仓清单 +《GitHub 入门指南》；ai-workflow-collection PR #1 于 01:08 合并", "Pinterest打野：读完 180 页方案后分三批收图，共 57 条", "OB导播：记录器上线，文件落 E 盘"] },
-    { t: "sub", s: "待你处理" },
-    { t: "li", items: ["2 条错存至「展示设计」的视频是否挪到 AGIBOT", "AGIBOT 图版是否改为私密", "是否在 Codex 安装 Excel 技能"] },
-  ] };
-  if (m.k === "all") return { hue: C.amber, kicker: "Overview · 全局梳理", title: "工作全局梳理 · 2026-11-03", href: URLALL, body: [
-    { t: "p", s: "从「设计空间、出图」变成了「调度聊天线程」：方案散在多条 Codex 会话和三个沟通渠道里，没有一个当天的唯一目标。" },
-    { t: "stats", items: [["4", "Codex 项目"], ["162", "应用切换"], ["36%", "Codex 窗口"], ["7%", "动手设计", C.amber]] },
-    { t: "sub", s: "项目状态" },
-    { t: "kv", k: "智元 AGIBOT", v: "投标第二轮 · 4F Blender v02 出图；3F 平面 V04 → 回 Wuj 评论、验收 4F、确认 3F" },
-    { t: "kv", k: "美的", v: "10/28 反馈修改 · 标牌 AI v15→v21 → 确认 v21 定稿" },
-    { t: "kv", k: "华子 / MM", v: "状态未知" },
-    { t: "sub", s: "建议" },
-    { t: "li", items: ["每天定一个目标：10:00 OB导播问一句，晚报对照", "一个项目只留一条 Codex 主线程，结论导出成文件", "按时间块干活：上午 AGIBOT，下午美的；消息 11:30 / 17:30 集中回", "bot 汇报合并；一周内不再新建 bot", "22:00 以后不再派新的 Codex 任务"] },
-  ] };
+  const review = reviews.find(r => r.id === m.k);
+  if (review) return { hue: C.amber, kicker: review.kicker, title: review.title, href: review.href, body: hueify(review.body) };
   if (m.k === "wk" || m.k === "mo") { const wk = m.k === "wk"; return { hue: C.amber, kicker: "Scheduled · 尚未生成", title: wk ? "周报" : "月报", body: [
     { t: "p", s: wk ? "第一份周报将于 2026-11-09 00:30（北京时间）生成。" : "第一份月报将于 2026-12-01 00:45（北京时间）生成。" },
     { t: "stats", items: [[wk ? "11-09" : "12-01", "首次日期", C.amber], [wk ? "00:30" : "00:45", "北京时间"]] },
@@ -197,6 +143,6 @@ function renderPanelBody(panel) {
   }).join("");
 }
 
-window.CYH = { C, projects, cats, pins, boards, boardPins, allPins, plans, moons, totalPins, images, getPanel, renderPanelBody, escapeHTML, P, URL03, URL02, URLALL, REPO };
+window.CYH = { C, projects, projectsUpdated, cats, pins, boards, boardPins, allPins, plans, reviews, dailies, latestDaily, moons, moonAngles, totalPins, images, getPanel, renderPanelBody, escapeHTML, P, REPO };
 })();
 

@@ -75,16 +75,16 @@
       };
       for (const g of this.galaxies) this.nodes.push({...g});
       const review = this.galaxies[0];
-      moons.forEach((m, i) => add('s1',m.k.k,0,m.label,m.sub,[-.65,.42,-2.3,1.65,2.9][i],review.rx*(i<2?.79:1),review.ry*(i<2?.79:1),i===0?9:i<3?6:4,{dim:i>2}));
+      moons.forEach((m, i) => { const near=!m.pending&&i<2; add('s1',m.k.k,0,m.label,m.sub,window.CYH.moonAngles[i],review.rx*(near?.79:1),review.ry*(near?.79:1),m.pending?4:i===0?9:i<3?6:5,{dim:!!m.pending}); });
       const inspiration = this.galaxies[1];
       boards.forEach((b,i) => add('s2','board',i,b.n,`${String(window.CYH.boardPins?.[i]?.length??b.c).padStart(2,'0')} IMAGES`,i*TAU/boards.length-1.85,
         inspiration.rx*(.88+(i%3)*.07),inspiration.ry*(.9+(i%3)*.06),2.7+Math.sqrt(b.c)*1.12,{hue:b.n==='AGIBOT'?C.amber:C.violet,priority:b.c}));
       pins.forEach((p,i) => add('s2','pin',i,p.t,`PIN ${String(i+1).padStart(2,'0')}`,i*TAU/6-Math.PI/2,
         this.phone?80:95,this.phone?85:72,5.2));
       const workflow=this.galaxies[2];
-      projects.forEach((p,i) => add('s3','gh',i,p.name.split('/')[1],p.top?'FIRST PICK':p.cat,i*TAU/11-Math.PI/2,workflow.rx,workflow.ry,p.top?7:4.5,{dim:!p.top,priority:p.top?20:1}));
+      projects.forEach((p,i) => add('s3','gh',i,p.name.split('/')[1],p.top?'FIRST PICK':p.cat,i*TAU/Math.max(1,projects.length)-Math.PI/2,workflow.rx,workflow.ry,p.top?7:4.5,{dim:!p.top,priority:p.top?20:1}));
       const upcoming=this.galaxies[3];
-      plans.forEach(([title],i) => add('s4','plan',i,title,`P.0${i+1}`,i*TAU/5-2.25,upcoming.rx,upcoming.ry,4.5,{dim:true}));
+      plans.forEach(([title],i) => add('s4','plan',i,title,`P.0${i+1}`,i*TAU/Math.max(1,plans.length)-2.25,upcoming.rx,upcoming.ry,4.5,{dim:true}));
       this.nodeMap = new Map(this.nodes.map(n=>[n.id,n]));
     }
 
@@ -282,7 +282,7 @@
         }
         if(n.key==='s3')this.ringedPlanet(n,true);
         if(n.key==='s1'&&r>35) {
-          ctx.fillStyle='rgba(51,40,30,.8)';ctx.font=`${Math.min(12,r*.17)}px Consolas,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('11—03',x,y+1);
+          ctx.fillStyle='rgba(51,40,30,.8)';ctx.font=`${Math.min(12,r*.17)}px Consolas,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((window.CYH.latestDaily?.date||'').slice(5).replace('-','—'),x,y+1);
         }
       } else {
         const glowRadius=r*3.5;
