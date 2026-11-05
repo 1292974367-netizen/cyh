@@ -9,7 +9,7 @@
   const random = seed => () => ((seed = seed * 16807 % 2147483647) / 2147483647);
   const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
   const specs = [
-    { key:'s1', title:'工作复盘', sub:'01 / REVIEW', caption:'把每一天，留在轨道上。', hue:C.amber, kind:'amber', r:74, rx:170, ry:150 },
+    { key:'s1', title:'工作复盘', sub:'01 / REVIEW', caption:'把每一天，留在轨道上。', hue:C.amber, kind:'amber', r:30, rx:200, ry:150 },
     { key:'s2', title:'视觉灵感', sub:'02 / INSPIRATION', caption:`${boards.length} 个画板 · ${window.CYH.allPins.length} 个灵感切片`, hue:C.violet, kind:'violet', r:20, rx:254, ry:158 },
     { key:'s3', title:'AI 工作流', sub:'03 / WORKFLOW', caption:'让工具，成为创作的引力。', hue:C.teal, kind:'teal', r:40, rx:210, ry:94 },
     { key:'s4', title:'接下来', sub:'04 / YET TO EXPLORE', caption:'尚未点亮的，还有很多。', hue:C.grey, kind:'grey', r:16, rx:146, ry:100 }
@@ -64,7 +64,7 @@
       this.galaxies = specs.map((s, i) => {
         const [x,y,z] = (this.phone ? portrait : desktop)[i];
         return { ...s, id:`${s.key}:0`, index:0, main:true, galaxy:s.key, x,y,z,
-          r:this.phone ? [104,38,65,30][i] : s.r,
+          r:this.phone ? [38,38,65,30][i] : s.r,
           rx:this.phone ? [230,220,235,210][i] : s.rx,
           ry:this.phone ? [155,155,145,140][i] : s.ry };
       });
@@ -76,16 +76,32 @@
       };
       for (const g of this.galaxies) this.nodes.push({...g});
       const review = this.galaxies[0];
-      moons.forEach((m, i) => add('s1',m.k.k,0,m.label,m.sub,[-.65,.42,-2.3,1.65,2.9][i],review.rx*(i<2?.79:1),review.ry*(i<2?.79:1),i===0?9:i<3?6:4,{dim:i>2}));
+      const latestDate=window.CYH.latestReview?.date;
+      const dateParts=/^(\d{4})-(\d{2})-\d{2}$/.exec(latestDate||'');
+      const monthDays=dateParts?new Date(Number(dateParts[1]),Number(dateParts[2]),0).getDate():31;
+      this.reviewTracks=[
+        {type:'daily',label:'日报 · 外圈',factor:1,slots:monthDays},
+        {type:'weekly',label:'周报 · 中圈',factor:.68,slots:4},
+        {type:'monthly',label:'月报 · 内圈',factor:.38,slots:1}
+      ].map(track=>{
+        const entries=moons.filter(m=>m.type===track.type).sort((a,b)=>String(a.review?.date||'').localeCompare(String(b.review?.date||''))||String(a.reviewId).localeCompare(String(b.reviewId)));
+        entries.forEach((m,i)=>add('s1',m.k.k,0,m.label,m.sub,-Math.PI/2+i*TAU/entries.length,
+          review.rx*track.factor,review.ry*track.factor,track.type==='daily'?8:track.type==='weekly'?9:10,
+          {reviewId:m.reviewId,reviewType:m.type,review:m.review,track:track.type,priority:m.reviewId===window.CYH.latestReview?.id?30:10}));
+        return {...track,count:entries.length,slots:Math.max(track.slots,entries.length)};
+      });
+      const overviews=moons.filter(m=>!this.reviewTracks.some(track=>track.type===m.type));
+      overviews.forEach((m,i)=>add('s1',m.k.k,0,m.label,m.sub,0,0,0,5,
+        {reviewId:m.reviewId,reviewType:m.type,review:m.review,overviewOffset:{x:(i-(overviews.length-1)/2)*.5,y:1.28},dim:true}));
       const inspiration = this.galaxies[1];
       boards.forEach((b,i) => add('s2','board',i,b.n,`${String(window.CYH.boardPins?.[i]?.length??b.c).padStart(2,'0')} IMAGES`,i*TAU/boards.length-1.85,
         inspiration.rx*(.88+(i%3)*.07),inspiration.ry*(.9+(i%3)*.06),2.7+Math.sqrt(b.c)*1.12,{hue:b.n==='AGIBOT'?C.amber:C.violet,priority:b.c}));
-      pins.forEach((p,i) => add('s2','pin',i,p.t,`PIN ${String(i+1).padStart(2,'0')}`,i*TAU/6-Math.PI/2,
+      pins.forEach((p,i) => add('s2','pin',i,p.t,`PIN ${String(i+1).padStart(2,'0')}`,i*TAU/Math.max(1,pins.length)-Math.PI/2,
         this.phone?80:95,this.phone?85:72,5.2));
       const workflow=this.galaxies[2];
-      projects.forEach((p,i) => add('s3','gh',i,p.name.split('/')[1],p.top?'FIRST PICK':p.cat,i*TAU/11-Math.PI/2,workflow.rx,workflow.ry,p.top?7:4.5,{dim:!p.top,priority:p.top?20:1}));
+      projects.forEach((p,i) => add('s3','gh',i,p.name.split('/')[1]||p.name,p.top?'FIRST PICK':p.cat,i*TAU/Math.max(1,projects.length)-Math.PI/2,workflow.rx,workflow.ry,p.top?7:4.5,{dim:!p.top,priority:p.top?20:1}));
       const upcoming=this.galaxies[3];
-      plans.forEach(([title],i) => add('s4','plan',i,title,`P.0${i+1}`,i*TAU/5-2.25,upcoming.rx,upcoming.ry,4.5,{dim:true}));
+      plans.forEach(([title],i) => add('s4','plan',i,title,`P.${String(i+1).padStart(2,'0')}`,i*TAU/Math.max(1,plans.length)-2.25,upcoming.rx,upcoming.ry,4.5,{dim:true}));
       this.nodeMap = new Map(this.nodes.map(n=>[n.id,n]));
     }
 
@@ -95,12 +111,20 @@
       // The mobile overview has four separate, compact orbits. The inspiration
       // orbit unfolds vertically only when approached, making room for its boards.
       if(this.phone&&g.key==='s2')return {rx:lerp(g.rx,170,detail),ry:lerp(g.ry,295,detail)};
+      if(this.phone&&g.key==='s1')return {rx:lerp(g.rx,165,detail),ry:lerp(g.ry,205,detail)};
       return {rx:g.rx,ry:g.ry};
     }
 
     focusPose(key) {
       const g = this.galaxies.find(g => g.key===key || g.id===key);
       if (!g) return this.home();
+      if(g.key==='s1') {
+        const shape=this.shape(g,1);
+        const availableW=this.width-(this.phone?78:260);
+        const availableH=this.height-this.safe.top-this.safe.bottom-(this.phone?100:110);
+        const scale=Math.min(availableW/(2*(shape.rx+14)),availableH/(2.5*shape.ry),this.phone?.86:1.8);
+        return {x:g.x,y:g.y+shape.ry*.08,z:Math.max(this.zoomRange.min,this.focal/Math.max(.2,scale)-g.z)};
+      }
       if(g.key==='s2') {
         const shape=this.shape(g,1),margin=this.phone?40:48;
         const scale=Math.min((this.width-(this.phone?48:180))/(2*(shape.rx+margin)),
@@ -113,10 +137,29 @@
       return { x:g.x, y:g.y, z:Math.max(this.bounds.minZ,this.focal/Math.max(.2,scale)-g.z) };
     }
 
+    focusReviewPose(id,time=0) {
+      const node=this.nodes.find(n=>n.reviewId===id||n.id===id);
+      if(!node||node.reviewType!=='daily')return this.focusPose('s1');
+      // Resolve the fully unfolded position before flying; no stale overview
+      // coordinates are carried into the close-up camera.
+      const g=this.galaxies[0],shape=this.shape(g,1);
+      const world={x:g.x+Math.cos(node.angle)*node.rx*shape.rx/g.rx,y:g.y+Math.sin(node.angle)*node.ry*shape.ry/g.ry,z:g.z};
+      const scale=(this.phone?19:23)/(node.r*1.09);
+      const directZ=this.focal/scale-world.z;
+      const z=directZ>=120?directZ:120*this.focal/(scale*(120+world.z));
+      return {x:world.x,y:world.y,z:clamp(z,this.zoomRange.min,this.zoomRange.max)};
+    }
+
     getWorld(id, time=0) {
       const node=typeof id==='string'?this.nodeMap.get(id):id;
       if (!node) return null;
       const g=this.galaxies.find(g=>g.key===node.galaxy);
+      if(node.galaxy==='s1') {
+        const shape=this.shape(g);
+        if(node.main)return {x:g.x,y:g.y,z:g.z};
+        if(node.overviewOffset)return {x:g.x+node.overviewOffset.x*shape.rx,y:g.y+node.overviewOffset.y*shape.ry,z:g.z};
+        return {x:g.x+Math.cos(node.angle)*node.rx*shape.rx/g.rx,y:g.y+Math.sin(node.angle)*node.ry*shape.ry/g.ry,z:g.z};
+      }
       const gi=this.galaxies.indexOf(g);
       const floatX=Math.sin(time*.12+gi*1.7)*3.5;
       const floatY=Math.sin(time*.16+gi*1.3)*4;
@@ -195,11 +238,11 @@
       const ctx=this.ctx;ctx.strokeStyle=rgba(g.hue,alpha);ctx.lineWidth=.7;
       if(dashed)ctx.setLineDash([1.7,6]);
       ctx.beginPath();let started=false;
-      const turn=Math.sin(time*.025+this.galaxies.findIndex(other=>other.key===g.key))*.025;
+      const turn=g.key==='s1'?0:Math.sin(time*.025+this.galaxies.findIndex(other=>other.key===g.key))*.025;
       for(let i=0;i<=100;i++) {
         const a=i/100*TAU;
         const lx=Math.cos(a)*rx,ly=Math.sin(a)*ry;
-        const p=this.project({x:g.x+lx*Math.cos(turn)-ly*Math.sin(turn),y:g.y+lx*Math.sin(turn)+ly*Math.cos(turn),z:g.z+Math.sin(a)*38+Math.cos(a*2)*18},camera);
+        const p=this.project({x:g.x+lx*Math.cos(turn)-ly*Math.sin(turn),y:g.y+lx*Math.sin(turn)+ly*Math.cos(turn),z:g.key==='s1'?g.z:g.z+Math.sin(a)*38+Math.cos(a*2)*18},camera);
         if(p.depth<35){started=false;continue;}
         if(!started){ctx.moveTo(p.x,p.y);started=true;}else ctx.lineTo(p.x,p.y);
       }
@@ -216,15 +259,21 @@
       ctx.drawImage(this.glow(g.hue),center.x-radius,center.y-radius*.75,radius*2,radius*1.5);
       ctx.globalAlpha=1;
       if(g.key==='s1') {
-        this.orbit(g,camera,time,g.rx*.8,g.ry*.8,.2*center.alpha);
-        this.orbit(g,camera,time,g.rx,g.ry,.14*center.alpha,true);
-        for(let i=0;i<60;i++){
-          const a=i/60*TAU;
-          const p=this.project({x:g.x+Math.cos(a)*(g.rx+7),y:g.y+Math.sin(a)*(g.ry+7),z:g.z+Math.sin(a)*38},camera);
-          const q=this.project({x:g.x+Math.cos(a)*(g.rx+(i%5===0?13:10)),y:g.y+Math.sin(a)*(g.ry+(i%5===0?13:10)),z:g.z+Math.sin(a)*38},camera);
-          if(p.depth<35)continue;
-          ctx.strokeStyle=rgba(g.hue,(i%5===0?.25:.12)*center.alpha);ctx.lineWidth=.6;
-          ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+        for(const track of this.reviewTracks) {
+          const rx=g.rx*track.factor,ry=g.ry*track.factor;
+          this.orbit(g,camera,time,rx,ry,(track.type==='daily'?.4:.28)*center.alpha,track.count===0);
+          // Capacity marks remain a scaffold, never clickable placeholder reports.
+          for(let i=0;i<track.slots;i++) {
+            const a=-Math.PI/2+i/track.slots*TAU;
+            const p=this.project({x:g.x+Math.cos(a)*(rx+3),y:g.y+Math.sin(a)*(ry+3),z:g.z},camera);
+            const q=this.project({x:g.x+Math.cos(a)*(rx+7),y:g.y+Math.sin(a)*(ry+7),z:g.z},camera);
+            ctx.strokeStyle=rgba(g.hue,.32*center.alpha);ctx.lineWidth=.7;
+            ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+          }
+        }
+        for(const node of projected.filter(n=>n.overviewOffset)) {
+          ctx.strokeStyle=rgba(g.hue,.2*center.alpha);ctx.lineWidth=.7;ctx.setLineDash([2,5]);
+          ctx.beginPath();ctx.moveTo(node.x,node.y-8);ctx.lineTo(node.x,node.y-24);ctx.stroke();ctx.setLineDash([]);
         }
       } else if(g.key==='s2') {
         this.orbit(g,camera,time,g.rx*1.09,g.ry*1.09,.09*center.alpha);
@@ -288,8 +337,9 @@
           ctx.restore();
         }
         if(n.key==='s3')this.ringedPlanet(n,true);
-        if(n.key==='s1'&&r>35) {
-          ctx.fillStyle='rgba(51,40,30,.8)';ctx.font=`${Math.min(12,r*.17)}px Consolas,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('11—03',x,y+1);
+        if(n.key==='s1'&&r>22) {
+          const date=window.CYH.latestReview?.date?.slice(5).replace('-','—')||'';
+          ctx.fillStyle='rgba(51,40,30,.8)';ctx.font=`${Math.min(12,r*.25)}px Consolas,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(date,x,y+1);
         }
       } else {
         const glowRadius=r*3.5;
@@ -377,11 +427,20 @@
       const shape=this.shape(g),factor=g.key==='s2'?1.09:g.key==='s3'?1.06:1;
       const points=Array.from({length:64},(_,i)=>{
         const a=i/64*TAU;
-        return this.project({x:g.x+Math.cos(a)*shape.rx*factor,y:g.y+Math.sin(a)*shape.ry*factor,z:g.z+Math.sin(a)*38+Math.cos(a*2)*18},camera);
+        return this.project({x:g.x+Math.cos(a)*shape.rx*factor,y:g.y+Math.sin(a)*shape.ry*factor,z:g.key==='s1'?g.z:g.z+Math.sin(a)*38+Math.cos(a*2)*18},camera);
       });
       const minX=Math.min(...points.map(p=>p.x)),maxX=Math.max(...points.map(p=>p.x));
       const minY=Math.min(...points.map(p=>p.y)),maxY=Math.max(...points.map(p=>p.y));
       return {key:g.key,x:minX,y:minY,width:maxX-minX,height:maxY-minY};
+    }
+
+    reviewOrbitMetadata(camera) {
+      const g=this.galaxies[0],shape=this.shape(g),center=this.project(g,camera);
+      return this.reviewTracks.map(track=>{
+        const rx=shape.rx*track.factor,ry=shape.ry*track.factor;
+        return {...track,rx,ry,center:{x:center.x,y:center.y},screenRx:rx*center.scale,screenRy:ry*center.scale,
+          anchor:this.project({x:g.x+rx*.72,y:g.y-ry*.69,z:g.z},camera)};
+      });
     }
 
     render(camera,timeSeconds,options={}) {
@@ -397,14 +456,15 @@
         const world=this.getWorld(node,time),p=this.project(world,camera),watch=this.watch(p.x,p.y);
         const reveal=node.main?this.detail:this.detail*(node.galaxy==='s2'&&node.key==='pin'?.65:1);
         const r=node.main?node.r*p.scale*watch.size:lerp(this.phone?1.5:2.05,node.r*p.scale*watch.size,reveal);
-        const alpha=watch.alpha*(node.main&&node.key==='s4'?.85:1)*this.marginFade(p.y)*(focus&&node.galaxy!==focus?backgroundAlpha:1);
+        const closeUpAlpha=(options.focusReviewId&&node.reviewId!==options.focusReviewId) ? .16 : 1;
+        const alpha=watch.alpha*(node.main&&node.key==='s4'?.85:1)*this.marginFade(p.y)*(focus&&node.galaxy!==focus?backgroundAlpha:1)*closeUpAlpha;
         const labelAnchor=node.main?this.project({x:world.x,y:world.y-this.shape(node).ry-55,z:world.z},camera):null;
         return {...node,...p,r,alpha,reveal,world,labelAnchor,visible:p.depth>35&&p.x+r>-20&&p.x-r<this.width+20&&p.y+r>-20&&p.y-r<this.height+20};
       });
       for(const galaxy of [...this.galaxies].sort((a,b)=>b.z-a.z))this.drawGalaxy(galaxy,camera,time,projected);
       for(const node of [...projected].sort((a,b)=>b.depth-a.depth))this.drawBody(node,time,options.hoverId,options.selectedId);
       const satellites=this.drawSatellites(projected,camera,options);
-      return {nodes:projected,galaxies:projected.filter(n=>n.main),satellites,orbits:this.galaxies.map(g=>this.orbitBounds(g,camera,time)),zoom,detail:this.detail};
+      return {nodes:projected,galaxies:projected.filter(n=>n.main),satellites,orbits:this.galaxies.map(g=>this.orbitBounds(g,camera,time)),reviewOrbits:this.reviewOrbitMetadata(camera),zoom,detail:this.detail};
     }
   }
   window.CYHUniverse=CYHUniverse;
