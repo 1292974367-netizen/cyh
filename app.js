@@ -1,4 +1,4 @@
-/* cyh · Personal Atlas IV. Local Canvas universe + accessible HTML controls. */
+/* cyh · Personal Atlas V. Local Canvas universe + accessible HTML controls. */
 (() => {
   'use strict';
   const { projects, getPanel, renderPanelBody, escapeHTML: esc } = window.CYH;
@@ -26,6 +26,7 @@
   let lastTime = 0, sceneTime = 0, lastLayout = -1, layout = [], raf = 0;
   let gesture = null, suppressClickUntil = 0, lastTap = null;
   let dimensions = { w: 0, h: 0 }, focusedGalaxy = null;
+  let navigationDepth = 0;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const idOf = (key, index = 0) => `${key}:${Number(index)}`;
@@ -38,7 +39,7 @@
     buttons.forEach(({el})=>el.remove());buttons.clear();lastLayout=-1;
   }
   function clearMotion() {flight=null;inertia.x=inertia.y=0;velocity.x=velocity.y=velocity.z=0;}
-  function limits() {return scene.zoomRange||{min:120,max:1550};}
+  function limits() {return scene.zoomRange||{min:1,max:1550};}
   function boundTarget(rubber=false) {
     const b=scene.bounds||{minX:-950,maxX:950,minY:-1000,maxY:1000},padding=phone?140:220;
     for(const [axis,low,high] of [['x',b.minX-padding,b.maxX+padding],['y',b.minY-padding,b.maxY+padding]]) {
@@ -53,11 +54,13 @@
     else flight={from:{...camera},to:{...pose},start:performance.now(),duration:980,done};
   }
   function reset(animate=true) {
+    navigationDepth=0;
     clearMotion();if(imageViewer.open)imageViewer.close();if(dialog.open)dialog.close();selected=null;focusedGalaxy=null;
     const home=scene.home();if(animate)flyTo(home);else{Object.assign(camera,home);Object.assign(target,home);}
     announce('已返回宇宙全景');
   }
   function focusGalaxy(key) {
+    navigationDepth=scene.galaxies.find(g=>g.key===key)?.z||0;
     if(dialog.open)dialog.close();selected=null;focusedGalaxy=key;
     const pose=scene.focusPose(key);if(pose)flyTo(pose);
     announce(`正在靠近${({s1:'工作复盘',s2:'视觉灵感',s3:'AI 工作流',s4:'接下来'})[key]}`);
@@ -75,10 +78,13 @@
   }
   function zoomAt(factor,x=scene.center.x,y=scene.center.y) {
     flight=null;focusedGalaxy=null;selected=null;inertia.x=inertia.y=0;
-    const oldZ=target.z,range=limits(),newZ=clamp(oldZ*factor,range.min*.92,range.max*1.04);
-    // Anchor the world under the pointer as the camera moves forward/backward.
-    target.x+=(x-scene.center.x)*(oldZ-newZ)/scene.focal;
-    target.y+=(y-scene.center.y)*(oldZ-newZ)/scene.focal;
+    const anchor=imageAt(x,y)||hitAt(x,y);
+    if(anchor?.world)navigationDepth=anchor.world.z;
+    const oldZ=target.z,range=limits(),newZ=clamp(oldZ*factor,range.min,range.max);
+    // Use the same depth-aware projection for wheel, pinch and close magnification.
+    const before=scene.projectionScale(target,navigationDepth),after=scene.projectionScale({...target,z:newZ},navigationDepth);
+    target.x+=(x-scene.center.x)*(1/before-1/after);
+    target.y+=(y-scene.center.y)*(1/before-1/after);
     target.z=newZ;
   }
   function updateCamera(now,dt) {
@@ -177,7 +183,7 @@
     }ctx.restore();
   }
   function tick(now) {
-    const dt=Math.min(.05,lastTime?(now-lastTime)/1000:1/60);lastTime=now;if(!motion.matches&&!dialog.open&&!imageViewer.open)sceneTime+=dt;
+    const dt=Math.min(.05,lastTime?(now-lastTime)/1000:1/60);lastTime=now;if(!motion.matches&&!dialog.open&&!imageViewer.open&&camera.z>=120)sceneTime+=dt;
     updateCamera(now,dt);
     const nearest=frame?.galaxies.reduce((a,n)=>!a||distance(n,scene.center)<distance(a,scene.center)?n:a,null);
     frame=scene.render(camera,sceneTime,{reducedMotion:motion.matches,hoverId:hovered,selectedId:selected,focusGalaxy:focusedGalaxy||nearest?.key});
@@ -193,15 +199,16 @@
   atlas.addEventListener('pointerdown',e=>{
     if(e.button!==0||dialog.open||imageViewer.open)return;e.preventDefault();flight=null;inertia.x=inertia.y=0;
     pointers.set(e.pointerId,position(e));atlas.setPointerCapture(e.pointerId);const label=e.target.closest('[data-node]');
+    const anchor=imageAt(e.clientX,e.clientY)||hitAt(e.clientX,e.clientY);if(anchor?.world)navigationDepth=anchor.world.z;
     if(pointers.size===1)gesture={start:position(e),last:position(e),lastAt:performance.now(),moved:false,pinched:false,id:label?.dataset.node||hitAt(e.clientX,e.clientY)?.id,imageIndex:label?undefined:(e.target.closest('[data-image]')?.dataset.image??imageAt(e.clientX,e.clientY)?.imageIndex),trigger:e.target,type:e.pointerType};
     else{gesture.pinched=true;gesture.moved=true;gesture.pair=pair();}atlas.classList.add('is-dragging');
   });
   atlas.addEventListener('pointermove',e=>{
     if(!pointers.has(e.pointerId)){const label=e.target.closest('[data-node]');hovered=label?.dataset.node||hitAt(e.clientX,e.clientY)?.id||null;atlas.classList.toggle('is-hovering',Boolean(hovered||e.target.closest('[data-image]')));return;}
     const now=performance.now(),p=position(e);pointers.set(e.pointerId,p);
-    if(pointers.size>=2){const next=pair(),prev=gesture.pair||next;zoomAt(prev.d/next.d,next.x,next.y);const scale=scene.focal/target.z;target.x-=(next.x-prev.x)/scale;target.y-=(next.y-prev.y)/scale;gesture.pair=next;gesture.pinched=true;gesture.moved=true;}
+    if(pointers.size>=2){const next=pair(),prev=gesture.pair||next;zoomAt(prev.d/next.d,prev.x,prev.y);const scale=scene.projectionScale(target,navigationDepth);target.x-=(next.x-prev.x)/scale;target.y-=(next.y-prev.y)/scale;gesture.pair=next;gesture.pinched=true;gesture.moved=true;}
     else{const dx=p.x-gesture.last.x,dy=p.y-gesture.last.y;if(distance(p,gesture.start)>6)gesture.moved=true;
-      if(gesture.moved){focusedGalaxy=null;const scale=scene.focal/target.z,dt=Math.max(.008,(now-gesture.lastAt)/1000);target.x-=dx/scale;target.y-=dy/scale;inertia.x=clamp(-dx/scale/dt,-2400,2400);inertia.y=clamp(-dy/scale/dt,-2400,2400);boundTarget(true);}
+      if(gesture.moved){focusedGalaxy=null;const scale=scene.projectionScale(target,navigationDepth),dt=Math.max(.008,(now-gesture.lastAt)/1000);target.x-=dx/scale;target.y-=dy/scale;inertia.x=clamp(-dx/scale/dt,-2400,2400);inertia.y=clamp(-dy/scale/dt,-2400,2400);boundTarget(true);}
     }gesture.last=p;gesture.lastAt=now;
   });
   function endPointer(e,cancelled=false){
@@ -297,7 +304,7 @@
     if(e.key==='Escape'){e.preventDefault();reset();return;}if(dialog.open||e.ctrlKey||e.metaKey||e.altKey)return;
     if(e.key==='+'||e.key==='='){e.preventDefault();zoomAt(.8);}if(e.key==='-'){e.preventDefault();zoomAt(1.25);}if(e.key==='Home'||e.key==='0'){e.preventDefault();reset();}
     const dirs={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
-    if(dirs[e.key]&&!e.target.closest('button,a')){e.preventDefault();flight=null;const d=dirs[e.key];target.x+=d[0]*80*camera.z/scene.focal;target.y+=d[1]*80*camera.z/scene.focal;boundTarget();}
+    if(dirs[e.key]&&!e.target.closest('button,a')){e.preventDefault();flight=null;const d=dirs[e.key],scale=scene.projectionScale(camera,navigationDepth);target.x+=d[0]*80/scale;target.y+=d[1]*80/scale;boundTarget();}
   });
   window.addEventListener('blur',()=>{pointers.clear();gesture=null;inertia.x=inertia.y=0;atlas.classList.remove('is-dragging');});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);pointers.clear();gesture=null;inertia.x=inertia.y=0;}else{lastTime=0;raf=requestAnimationFrame(tick);}});
