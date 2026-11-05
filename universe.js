@@ -38,6 +38,7 @@
       this.grain = Array.from({length:350}, () => ({x:rand()*2-1,y:rand()*2-1,r:.25+rand()*.65,a:rand()*.12}));
       this.glows = new Map();
       this.imageCache = new Map();
+      this.satelliteAngles = new Map();
       this.detail = 0;
       this.resize(innerWidth, innerHeight, innerWidth < 760 || innerHeight > innerWidth);
     }
@@ -53,7 +54,7 @@
       this.center = { x:width/2, y:this.safe.top+(height-this.safe.top-this.safe.bottom)/2 };
       this.focal = phone ? Math.min(width/990,(height-this.safe.top-this.safe.bottom)/1690)*1000 : Math.min(width/1600,height/900)*1000;
       this.bounds = { minX:phone?-900:-1100, maxX:phone?900:1100, minY:phone?-1200:-650, maxY:phone?1200:650, minZ:phone?95:160, maxZ:1650 };
-      this.zoomRange = { min:120, max:1550 };
+      this.zoomRange = { min:1, max:1550 };
       this.build();
     }
 
@@ -75,16 +76,16 @@
       };
       for (const g of this.galaxies) this.nodes.push({...g});
       const review = this.galaxies[0];
-      moons.forEach((m, i) => { const near=!m.pending&&i<2; add('s1',m.k.k,0,m.label,m.sub,window.CYH.moonAngles[i],review.rx*(near?.79:1),review.ry*(near?.79:1),m.pending?4:i===0?9:i<3?6:5,{dim:!!m.pending}); });
+      moons.forEach((m, i) => add('s1',m.k.k,0,m.label,m.sub,[-.65,.42,-2.3,1.65,2.9][i],review.rx*(i<2?.79:1),review.ry*(i<2?.79:1),i===0?9:i<3?6:4,{dim:i>2}));
       const inspiration = this.galaxies[1];
       boards.forEach((b,i) => add('s2','board',i,b.n,`${String(window.CYH.boardPins?.[i]?.length??b.c).padStart(2,'0')} IMAGES`,i*TAU/boards.length-1.85,
         inspiration.rx*(.88+(i%3)*.07),inspiration.ry*(.9+(i%3)*.06),2.7+Math.sqrt(b.c)*1.12,{hue:b.n==='AGIBOT'?C.amber:C.violet,priority:b.c}));
       pins.forEach((p,i) => add('s2','pin',i,p.t,`PIN ${String(i+1).padStart(2,'0')}`,i*TAU/6-Math.PI/2,
         this.phone?80:95,this.phone?85:72,5.2));
       const workflow=this.galaxies[2];
-      projects.forEach((p,i) => add('s3','gh',i,p.name.split('/')[1],p.top?'FIRST PICK':p.cat,i*TAU/Math.max(1,projects.length)-Math.PI/2,workflow.rx,workflow.ry,p.top?7:4.5,{dim:!p.top,priority:p.top?20:1}));
+      projects.forEach((p,i) => add('s3','gh',i,p.name.split('/')[1],p.top?'FIRST PICK':p.cat,i*TAU/11-Math.PI/2,workflow.rx,workflow.ry,p.top?7:4.5,{dim:!p.top,priority:p.top?20:1}));
       const upcoming=this.galaxies[3];
-      plans.forEach(([title],i) => add('s4','plan',i,title,`P.0${i+1}`,i*TAU/Math.max(1,plans.length)-2.25,upcoming.rx,upcoming.ry,4.5,{dim:true}));
+      plans.forEach(([title],i) => add('s4','plan',i,title,`P.0${i+1}`,i*TAU/5-2.25,upcoming.rx,upcoming.ry,4.5,{dim:true}));
       this.nodeMap = new Map(this.nodes.map(n=>[n.id,n]));
     }
 
@@ -130,9 +131,15 @@
         z:Math.max(-42,g.z+Math.sin(a)*38+Math.cos(a*2)*18)};
     }
 
+    projectionScale(camera,worldZ=0) {
+      // Continue beyond the original camera stop with optical magnification.
+      // This preserves the existing overview and keeps every depth plane in front.
+      return this.focal/Math.max(35,Math.max(120,camera.z)+worldZ)*Math.max(1,120/camera.z);
+    }
+
     project(world,camera) {
-      const depth=camera.z+world.z;
-      const scale=this.focal/Math.max(35,depth);
+      const depth=Math.max(120,camera.z)+world.z;
+      const scale=this.projectionScale(camera,world.z);
       return {x:this.center.x+(world.x-camera.x)*scale,y:this.center.y+(world.y-camera.y)*scale,scale,depth};
     }
 
@@ -282,7 +289,7 @@
         }
         if(n.key==='s3')this.ringedPlanet(n,true);
         if(n.key==='s1'&&r>35) {
-          ctx.fillStyle='rgba(51,40,30,.8)';ctx.font=`${Math.min(12,r*.17)}px Consolas,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((window.CYH.latestDaily?.date||'').slice(5).replace('-','—'),x,y+1);
+          ctx.fillStyle='rgba(51,40,30,.8)';ctx.font=`${Math.min(12,r*.17)}px Consolas,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('11—03',x,y+1);
         }
       } else {
         const glowRadius=r*3.5;
@@ -304,7 +311,8 @@
     drawSatellites(projected,camera,options) {
       const {ctx}=this,zoom=1000/camera.z;
       if(this.detail<.005)return [];
-      const boardNodes=projected.filter(n=>n.key==='board'&&n.depth>35&&n.alpha>.12);
+      const closeUp=camera.z<120;
+      const boardNodes=projected.filter(n=>n.key==='board'&&n.depth>35&&(closeUp||n.alpha>.12));
       const occupied=[],satellites=[];
       const intersects=(a,b,gap=3)=>a.x<b.x+b.width+gap&&a.x+a.width+gap>b.x&&a.y<b.y+b.height+gap&&a.y+a.height+gap>b.y;
       const baseZoom=this.phone?2.5:1.48;
@@ -323,21 +331,26 @@
         const height=width;
         const offset=radius*board.scale*lod;
         const choices=[0,.42,-.42,.85,-.85,Math.PI];
-        let rect;
-        for(const delta of choices) {
+        const orbitId=`image:${pin.index}`;
+        let rect,orbitAngle=closeUp?(this.satelliteAngles.get(orbitId)??angle):angle;
+        if(closeUp)rect={x:board.x+Math.cos(orbitAngle)*offset-width/2,y:board.y+Math.sin(orbitAngle)*offset-height/2,width,height};
+        for(const delta of closeUp?[]:choices) {
           const a=angle+delta;
           const candidate={x:board.x+Math.cos(a)*offset-width/2,y:board.y+Math.sin(a)*offset-height/2,width,height};
           const within=candidate.x>9&&candidate.x+width<this.width-9&&candidate.y>this.safe.top-8&&candidate.y+height<this.height-this.safe.bottom+8;
           const blocksNode=projected.some(n=>n.visible&&n.alpha>.22&&Math.hypot(n.x-(candidate.x+width/2),n.y-(candidate.y+height/2))<Math.max(width,height)/2+n.r+2);
-          if(within&&!occupied.some(r=>intersects(candidate,r,2))&&!blocksNode){rect=candidate;break;}
+          if(within&&!occupied.some(r=>intersects(candidate,r,2))&&!blocksNode){rect=candidate;orbitAngle=a;break;}
         }
         // Primary covers always remain available. Higher-level pins are culled
         // when their screen rectangles collide, and return as the camera closes in.
         if(!rect&&slot===0)rect={x:board.x+Math.cos(angle)*offset-width/2,y:board.y+Math.sin(angle)*offset-height/2,width,height};
         if(!rect)continue;
+        this.satelliteAngles.set(orbitId,orbitAngle);
         const visible=rect.x+width>0&&rect.x<this.width&&rect.y+height>this.safe.top-8&&rect.y<this.height-this.safe.bottom+8;
-        const alpha=lod*Math.min(1,board.alpha*1.5);
-        const satellite={id:`image:${pin.index}`,imageIndex:pin.index,boardIndex:board.index,...rect,alpha,visible};
+        // A close image remains visible even when its parent planet is offscreen.
+        const alpha=lod*(closeUp?this.watch(rect.x+width/2,rect.y+height/2).alpha:Math.min(1,board.alpha*1.5));
+        const world={x:board.world.x+Math.cos(orbitAngle)*radius*lod,y:board.world.y+Math.sin(orbitAngle)*radius*lod,z:board.world.z};
+        const satellite={id:orbitId,imageIndex:pin.index,boardIndex:board.index,...rect,world,alpha,visible};
         if(!visible)continue;
         occupied.push(rect);satellites.push(satellite);
         const cx=rect.x+width/2,cy=rect.y+height/2;
