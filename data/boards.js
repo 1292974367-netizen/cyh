@@ -1,7 +1,7 @@
 /* Owner: Pinterest打野. boards: one per board (slug = folder under assets/boards/); featured: core pins. Pins themselves live in assets/boards/pins-manifest.json + pins-data.js.
  * Plain script (no fetch) so file:// and GitHub Pages both work. See README「Bot 更新约定」. */
 window.CYH_BOARDS = {
-  "updated": "2026-11-04",
+  "updated": "2026-11-05",
   "boards": [
     {
       "n": "建筑",
@@ -67,9 +67,30 @@ window.CYH_BOARDS = {
       "c": 15
     },
     {
-      "n": "插画与海报",
+      "n": "插图与海报",
       "slug": "illustration-poster",
       "p": "%E6%8F%92%E5%9B%BE%E4%B8%8E%E6%B5%B7%E6%8A%A5",
+      "g": "文化与艺术",
+      "c": 1
+    },
+    {
+      "n": "好康的",
+      "slug": "haokang",
+      "p": "%E5%A5%BD%E5%BA%B7%E7%9A%84",
+      "g": "文化与艺术",
+      "c": 18
+    },
+    {
+      "n": "艺术",
+      "slug": "art",
+      "p": "%E8%89%BA%E6%9C%AF",
+      "g": "文化与艺术",
+      "c": 15
+    },
+    {
+      "n": "二次元",
+      "slug": "anime",
+      "p": "%E4%BA%8C%E6%AC%A1%E5%85%83",
       "g": "文化与艺术",
       "c": 1
     }
