@@ -7,6 +7,16 @@
   const labelsHost = document.querySelector('#map-labels');
   const imagesHost = document.querySelector('#map-images');
   const site = document.querySelector('#site');
+  const reviewLayer = document.createElement('section');
+  reviewLayer.className = 'review-satellites';
+  reviewLayer.setAttribute('aria-label', '日报细节卫星');
+  reviewLayer.hidden = true;
+  site.append(reviewLayer);
+  const reviewLegend = document.createElement('aside');
+  reviewLegend.className = 'review-orbit-legend';
+  reviewLegend.setAttribute('aria-label', '工作复盘三轨道');
+  reviewLegend.hidden = true;
+  site.append(reviewLegend);
   const dialog = document.querySelector('#preview');
   const content = document.querySelector('#preview-content');
   const closeButton = document.querySelector('#preview-close');
@@ -27,6 +37,7 @@
   let gesture = null, suppressClickUntil = 0, lastTap = null;
   let dimensions = { w: 0, h: 0 }, focusedGalaxy = null;
   let navigationDepth = 0;
+  let reviewFocusId = null, reviewSatelliteLayout = [], reviewMarkupId = null;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const idOf = (key, index = 0) => `${key}:${Number(index)}`;
@@ -36,7 +47,7 @@
     const w=innerWidth,h=innerHeight,wasPhone=phone;
     phone=w<760||h>w; dimensions={w,h}; scene.resize(w,h,phone);
     if(wasPhone!==phone)reset(false);
-    buttons.forEach(({el})=>el.remove());buttons.clear();lastLayout=-1;
+    buttons.forEach(({el,focusEl})=>{el.remove();focusEl?.remove();});buttons.clear();lastLayout=-1;
   }
   function clearMotion() {flight=null;inertia.x=inertia.y=0;velocity.x=velocity.y=velocity.z=0;}
   function limits() {return scene.zoomRange||{min:1,max:1550};}
@@ -55,19 +66,32 @@
   }
   function reset(animate=true) {
     navigationDepth=0;
+    reviewFocusId=null;
     clearMotion();if(imageViewer.open)imageViewer.close();if(dialog.open)dialog.close();selected=null;focusedGalaxy=null;
     const home=scene.home();if(animate)flyTo(home);else{Object.assign(camera,home);Object.assign(target,home);}
     announce('已返回宇宙全景');
   }
   function focusGalaxy(key) {
+    reviewFocusId=null;
     navigationDepth=scene.galaxies.find(g=>g.key===key)?.z||0;
     if(dialog.open)dialog.close();selected=null;focusedGalaxy=key;
     const pose=scene.focusPose(key);if(pose)flyTo(pose);
     announce(`正在靠近${({s1:'工作复盘',s2:'视觉灵感',s3:'AI 工作流',s4:'接下来'})[key]}`);
   }
+  function focusReview(id) {
+    const review=window.CYH.reviewById.get(id);
+    if(review?.type!=='daily')return;
+    if(dialog.open)dialog.close();
+    reviewFocusId=id;focusedGalaxy='s1';selected=idOf(id);
+    const node=frame?.nodes.find(n=>n.reviewId===id);
+    navigationDepth=node?.world.z||0;
+    flyTo(scene.focusReviewPose(id,sceneTime));
+    announce(`已放大${review.label||review.date}，展开有记录的细节卫星`);
+  }
   function previewTarget(key,index=0,trigger) {
     if(!getPanel(key,Number(index),category))return;
     if(dialog.open){openPanel(key,index,trigger);return;}
+    if(reviewSatelliteLayout.length&&key===reviewFocusId){openPanel(key,index,trigger);return;}
     const id=idOf(key,index),node=frame?.nodes.find(n=>n.id===id);
     if(!node){openPanel(key,index,trigger);return;}
     selected=id;focusedGalaxy=node.galaxy;
@@ -79,6 +103,7 @@
   function zoomAt(factor,x=scene.center.x,y=scene.center.y) {
     flight=null;focusedGalaxy=null;selected=null;inertia.x=inertia.y=0;
     const anchor=imageAt(x,y)||hitAt(x,y);
+    if(anchor?.reviewType==='daily')reviewFocusId=anchor.reviewId;
     if(anchor?.world)navigationDepth=anchor.world.z;
     const oldZ=target.z,range=limits(),newZ=clamp(oldZ*factor,range.min,range.max);
     // Use the same depth-aware projection for wheel, pinch and close magnification.
@@ -113,7 +138,14 @@
     measure.font=`${n.main?(phone?17:22):11}px "Segoe UI", "Microsoft YaHei", sans-serif`;
     const width=n.main?(phone||dimensions.h<550?132:158):Math.min(phone?154:230,Math.max(66,measure.measureText(n.title).width+28));
     el.style.width=`${Math.ceil(width)}px`;labelsHost.append(el);
-    const result={el,width:el.offsetWidth,height:el.offsetHeight||44};buttons.set(n.id,result);return result;
+    let focusEl=null;
+    if(n.reviewType==='daily'){
+      focusEl=document.createElement('button');focusEl.type='button';focusEl.className='review-magnify';
+      focusEl.dataset.focusReview=n.reviewId;focusEl.textContent='+';
+      focusEl.setAttribute('aria-label',`放大${n.title}，展开细节卫星`);focusEl.title='放大日报 · 展开细节卫星';
+      labelsHost.append(focusEl);
+    }
+    const result={el,focusEl,width:el.offsetWidth+(focusEl?36:0),height:Math.max(el.offsetHeight||44,focusEl?36:0)};buttons.set(n.id,result);return result;
   }
   function layoutLabels(now) {
     if(!frame)return;
@@ -122,6 +154,7 @@
     const zoom=1000/camera.z,nearest=frame.galaxies.reduce((a,n)=>!a||distance(n,scene.center)<distance(a,scene.center)?n:a,null);
     const detailGalaxy=focusedGalaxy||nearest?.key;
     const candidates=frame.nodes.filter(n=>{
+      if(reviewSatelliteLayout.length&&n.reviewId!==reviewFocusId)return false;
       if(!n.visible||n.alpha<.09||n.x < -20||n.x>dimensions.w+20||n.y<area.y-20||n.y>area.bottom+20)return false;
       if(n.main)return zoom<(phone?1.65:1.35)||n.galaxy===detailGalaxy;
       if(dimensions.h<550&&zoom<1.1)return false;
@@ -129,7 +162,7 @@
       return (n.reveal??0)>.14&&n.galaxy===detailGalaxy;
     });
     candidates.sort((a,b)=>Number(b.main)-Number(a.main)||Number(b.id===selected)-Number(a.id===selected)||Number(b.key==='board')-Number(a.key==='board')||distance(a,scene.center)-distance(b,scene.center));
-    const occupied=(frame.satellites||[]).filter(s=>s.visible&&s.alpha>.3).map(s=>({x:s.x,y:s.y,width:s.width,height:s.height})),next=[],shown=new Set();
+    const occupied=[...(frame.satellites||[]).filter(s=>s.visible&&s.alpha>.3).map(s=>({x:s.x,y:s.y,width:s.width,height:s.height})),...reviewSatelliteLayout],next=[],shown=new Set();
     for(const n of candidates){
       const item=labelFor(n),width=item.width,height=item.height;let preferred;
       if(n.main&&(phone||dimensions.h<550)&&zoom<1.65){preferred={x:n.x+Math.max(n.r,14)+9,y:n.y-height/2};if(preferred.x+width>area.right)preferred.x=n.x-width-Math.max(n.r,14)-9;}
@@ -151,11 +184,67 @@
       if(!position)continue;
       const rect={...position,width,height};occupied.push(rect);shown.add(n.id);
       item.el.hidden=false;item.el.style.left=`${position.x.toFixed(1)}px`;item.el.style.top=`${position.y.toFixed(1)}px`;
+      if(item.focusEl){item.focusEl.hidden=false;item.focusEl.style.left=`${position.x+width-36}px`;item.focusEl.style.top=`${position.y}px`;}
       item.el.style.opacity=(n.main?Math.max(phone?.74:.6,n.alpha):Math.max(.55,n.alpha)*Math.min(1,(n.reveal??1)*2)).toFixed(3);
       item.el.classList.toggle('is-selected',n.id===selected);item.el.setAttribute('aria-expanded',String(dialog.open&&n.id===selected));
       next.push({id:n.id,text:n.title,...rect,visible:true,node:n});
     }
-    buttons.forEach(({el},id)=>{if(!shown.has(id))el.hidden=true;});layout=next;lastLayout=now;
+    buttons.forEach(({el,focusEl},id)=>{if(!shown.has(id)){el.hidden=true;if(focusEl)focusEl.hidden=true;}});layout=next;lastLayout=now;
+  }
+  function satelliteBody(detail) {
+    if(detail.field==='time'){
+      const max=Math.max(1,...detail.items.map(item=>item.min));
+      return `<div class="satellite-time">${detail.items.map(item=>`<div><span>${esc(item.l)}</span><b>${esc(item.min)}<small> min</small></b><i style="--amount:${item.min/max*100}%"></i></div>`).join('')}</div>`;
+    }
+    if(detail.field==='shape'){
+      const max=Math.max(60,...detail.values);
+      return `<div class="satellite-hours" role="img" aria-label="${esc(detail.values.map((v,i)=>`${i}时 ${v}分钟`).join('；'))}">${detail.values.map((v,i)=>`<i style="height:${v/max*100}%" title="${i}:00 · ${v} 分钟"></i>`).join('')}</div><div class="satellite-hour-axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div><p class="satellite-unit">每小时活跃分钟 · 24 小时</p>`;
+    }
+    return `<ul>${detail.items.map(item=>`<li>${esc(item)}</li>`).join('')}</ul>`;
+  }
+  function layoutReviewSatellites() {
+    reviewSatelliteLayout=[];
+    const overviewPose=scene.focusPose('s1'),zoomRatio=overviewPose.z/camera.z;
+    let node=frame?.nodes.find(n=>n.reviewId===reviewFocusId&&n.reviewType==='daily');
+    if(!node&&zoomRatio>1.5){
+      node=frame?.nodes.filter(n=>n.reviewType==='daily'&&n.visible).sort((a,b)=>distance(a,scene.center)-distance(b,scene.center))[0];
+      if(node&&distance(node,scene.center)<(phone?90:180))reviewFocusId=node.reviewId;else node=null;
+    }
+    const show=Boolean(node&&zoomRatio>1.5&&node.visible&&distance(node,scene.center)<(phone?120:310));
+    const details=show?window.CYH.reviewDetails(node.review):[];
+    reviewLayer.hidden=!details.length;
+    const reviewing=(focusedGalaxy==='s1'||frame?.nodes.find(n=>n.key==='s1'&&distance(n,scene.center)<(phone?80:220)))&&1000/camera.z>(phone?1.5:1.15);
+    reviewLegend.hidden=!reviewing||details.length>0;
+    if(!reviewLegend.hidden){
+      const legend=(frame.reviewOrbits||[]).map(orbit=>`<span><i class="orbit-key ${orbit.type}"></i>${esc(orbit.label)} <b>${orbit.count}</b>${!orbit.count?'<small>待生成</small>':''}</span>`).join('');
+      const markup=`<div class="review-orbit-counts">${legend}</div><p>点击查看详情 · + 放大日报</p>`;
+      if(reviewLegend.innerHTML!==markup)reviewLegend.innerHTML=markup;
+    }
+    if(!details.length)return;
+    if(reviewMarkupId!==node.reviewId){
+      reviewLayer.innerHTML=`<button type="button" class="review-return" data-review-orbits>← 三轨道全景</button>${details.map((detail,i)=>`<article class="review-satellite" data-review-field="${detail.field}"><header><span>0${i+1}</span><h3>${esc(detail.title)}</h3></header><div class="satellite-content" tabindex="0" aria-label="${esc(detail.title)}">${satelliteBody(detail)}</div><button type="button" class="satellite-detail" data-open="${esc(node.reviewId)}">查看完整日报 ↗</button></article>`).join('')}`;
+      reviewMarkupId=node.reviewId;
+    }
+    reviewLayer.setAttribute('aria-label',`${node.title} · 细节卫星`);
+    reviewLayer.style.opacity=String(clamp((zoomRatio-1.5)/.35,0,1));
+    const width=phone?(dimensions.w-52)/2:244;
+    const height=phone?178:202;
+    const cx=clamp(node.x,phone?dimensions.w/2:width+110,phone?dimensions.w/2:dimensions.w-width-110);
+    const cy=clamp(node.y,scene.safe.top+height+48,dimensions.h-scene.safe.bottom-height-36);
+    const positions=phone?[
+      {x:20,y:cy-height-45},{x:dimensions.w-20-width,y:cy-height-45},
+      {x:20,y:cy+44},{x:dimensions.w-20-width,y:cy+44}
+    ]:[
+      {x:cx-width-86,y:cy-height-24},{x:cx+86,y:cy-height-24},
+      {x:cx-width-86,y:cy+32},{x:cx+86,y:cy+32}
+    ];
+    const ctx=canvas.getContext('2d');ctx.save();ctx.strokeStyle='#f2b866';ctx.lineWidth=.7;ctx.globalAlpha=.24;
+    [...reviewLayer.querySelectorAll('.review-satellite')].forEach((el,i)=>{
+      const p=positions[i];Object.assign(el.style,{left:`${p.x}px`,top:`${p.y}px`,width:`${width}px`,height:`${height}px`});
+      reviewSatelliteLayout.push({...p,width,height,field:details[i].field,reviewId:node.reviewId});
+      const endX=clamp(node.x,p.x,p.x+width),endY=clamp(node.y,p.y,p.y+height);
+      ctx.beginPath();ctx.moveTo(node.x,node.y);ctx.lineTo(endX,endY);ctx.stroke();
+    });ctx.restore();
   }
   function layoutImages() {
     const shown=new Set();
@@ -186,8 +275,8 @@
     const dt=Math.min(.05,lastTime?(now-lastTime)/1000:1/60);lastTime=now;if(!motion.matches&&!dialog.open&&!imageViewer.open&&camera.z>=120)sceneTime+=dt;
     updateCamera(now,dt);
     const nearest=frame?.galaxies.reduce((a,n)=>!a||distance(n,scene.center)<distance(a,scene.center)?n:a,null);
-    frame=scene.render(camera,sceneTime,{reducedMotion:motion.matches,hoverId:hovered,selectedId:selected,focusGalaxy:focusedGalaxy||nearest?.key});
-    layoutImages();if(now-lastLayout>32||lastLayout<0)layoutLabels(now);drawLeaders();
+    frame=scene.render(camera,sceneTime,{reducedMotion:motion.matches,hoverId:hovered,selectedId:selected,focusGalaxy:focusedGalaxy||nearest?.key,focusReviewId:reviewSatelliteLayout.length?reviewFocusId:null});
+    layoutImages();layoutReviewSatellites();if(now-lastLayout>32||lastLayout<0)layoutLabels(now);drawLeaders();
     const zoom=1000/camera.z;document.querySelector('#zoom-level').value=`${zoom.toFixed(1)}×`;site.classList.toggle('is-exploring',zoom>1.35);
     document.querySelectorAll('[data-galaxy]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.galaxy===focusedGalaxy)));
     raf=requestAnimationFrame(tick);
@@ -200,7 +289,7 @@
     if(e.button!==0||dialog.open||imageViewer.open)return;e.preventDefault();flight=null;inertia.x=inertia.y=0;
     pointers.set(e.pointerId,position(e));atlas.setPointerCapture(e.pointerId);const label=e.target.closest('[data-node]');
     const anchor=imageAt(e.clientX,e.clientY)||hitAt(e.clientX,e.clientY);if(anchor?.world)navigationDepth=anchor.world.z;
-    if(pointers.size===1)gesture={start:position(e),last:position(e),lastAt:performance.now(),moved:false,pinched:false,id:label?.dataset.node||hitAt(e.clientX,e.clientY)?.id,imageIndex:label?undefined:(e.target.closest('[data-image]')?.dataset.image??imageAt(e.clientX,e.clientY)?.imageIndex),trigger:e.target,type:e.pointerType};
+    if(pointers.size===1)gesture={start:position(e),last:position(e),lastAt:performance.now(),moved:false,pinched:false,reviewId:e.target.closest('[data-focus-review]')?.dataset.focusReview,id:label?.dataset.node||hitAt(e.clientX,e.clientY)?.id,imageIndex:label?undefined:(e.target.closest('[data-image]')?.dataset.image??imageAt(e.clientX,e.clientY)?.imageIndex),trigger:e.target,type:e.pointerType};
     else{gesture.pinched=true;gesture.moved=true;gesture.pair=pair();}atlas.classList.add('is-dragging');
   });
   atlas.addEventListener('pointermove',e=>{
@@ -217,7 +306,8 @@
     atlas.classList.remove('is-dragging');suppressClickUntil=performance.now()+400;
     if(cancelled||gesture.pinched||performance.now()-gesture.lastAt>100)inertia.x=inertia.y=0;
     if(!cancelled&&!gesture.moved&&!gesture.pinched){
-      if(gesture.imageIndex!==undefined){openImage(Number(gesture.imageIndex),gesture.trigger);lastTap=null;}
+      if(gesture.reviewId){focusReview(gesture.reviewId);lastTap=null;}
+      else if(gesture.imageIndex!==undefined){openImage(Number(gesture.imageIndex),gesture.trigger);lastTap=null;}
       else if(gesture.id){const [key,index]=gesture.id.split(':');previewTarget(key,Number(index),buttons.get(gesture.id)?.el);lastTap=null;}
       else if(gesture.type==='touch'){const now=performance.now();if(lastTap&&now-lastTap.at<330&&distance(lastTap,position(e))<28){reset();lastTap=null;}else lastTap={...position(e),at:now};}
     }gesture=null;
@@ -289,6 +379,8 @@
   let backdropDown=false;dialog.addEventListener('pointerdown',e=>{backdropDown=e.target===dialog&&outside(e);});
   dialog.addEventListener('click',e=>{if(backdropDown&&e.target===dialog&&outside(e))dialog.close();backdropDown=false;});
   document.addEventListener('click',e=>{
+    const magnify=e.target.closest('[data-focus-review]');if(magnify){if(atlas.contains(magnify)&&e.detail!==0&&performance.now()<suppressClickUntil)return;focusReview(magnify.dataset.focusReview);return;}
+    if(e.target.closest('[data-review-orbits]')){focusGalaxy('s1');return;}
     const picture=e.target.closest('[data-image]');if(picture){if(atlas.contains(picture)&&e.detail!==0&&performance.now()<suppressClickUntil)return;openImage(Number(picture.dataset.image),picture);return;}
     const nav=e.target.closest('[data-galaxy]');if(nav){focusGalaxy(nav.dataset.galaxy);return;}
     const button=e.target.closest('[data-open]');if(button){if(atlas.contains(button)&&e.detail!==0&&performance.now()<suppressClickUntil)return;previewTarget(button.dataset.open,button.dataset.index||0,button);return;}
@@ -301,7 +393,7 @@
       else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();stepImage(e.key==='ArrowLeft'?-1:1);}
       return;
     }
-    if(e.key==='Escape'){e.preventDefault();reset();return;}if(dialog.open||e.ctrlKey||e.metaKey||e.altKey)return;
+    if(e.key==='Escape'){e.preventDefault();reset();return;}if(dialog.open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('.satellite-content'))return;
     if(e.key==='+'||e.key==='='){e.preventDefault();zoomAt(.8);}if(e.key==='-'){e.preventDefault();zoomAt(1.25);}if(e.key==='Home'||e.key==='0'){e.preventDefault();reset();}
     const dirs={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
     if(dirs[e.key]&&!e.target.closest('button,a')){e.preventDefault();flight=null;const d=dirs[e.key],scale=scene.projectionScale(camera,navigationDepth);target.x+=d[0]*80/scale;target.y+=d[1]*80/scale;boundTarget();}
@@ -310,6 +402,6 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);pointers.clear();gesture=null;inertia.x=inertia.y=0;}else{lastTime=0;raf=requestAnimationFrame(tick);}});
   window.addEventListener('resize',resize,{passive:true});
   motion.addEventListener('change',()=>{if(motion.matches&&flight){const f=flight;flight=null;Object.assign(camera,f.to);Object.assign(target,f.to);f.done?.();}});
-  window.CYHAtlas={focusGalaxy,reset,snapshot:()=>({camera:{...camera},target:{...target},zoom:1000/camera.z,phone,flight:Boolean(flight),selected,focusedGalaxy,labels:layout.map(({node,...label})=>label),nodes:(frame?.nodes||[]).map(n=>({...n})),satellites:frame?.satellites||[],orbits:frame?.orbits||[],imageSelection:imageSelection?.index??null,focal:scene.focal,center:scene.center,range:limits(),reducedMotion:motion.matches})};
+  window.CYHAtlas={focusGalaxy,focusReview,reset,snapshot:()=>({camera:{...camera},target:{...target},zoom:1000/camera.z,phone,flight:Boolean(flight),selected,focusedGalaxy,reviewFocusId,reviewSatellites:reviewSatelliteLayout,reviewOrbits:frame?.reviewOrbits||[],labels:layout.map(({node,...label})=>label),nodes:(frame?.nodes||[]).map(n=>({...n})),satellites:frame?.satellites||[],orbits:frame?.orbits||[],imageSelection:imageSelection?.index??null,focal:scene.focal,center:scene.center,range:limits(),reducedMotion:motion.matches})};
   resize();raf=requestAnimationFrame(tick);
 })();
