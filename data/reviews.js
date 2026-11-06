@@ -698,5 +698,212 @@ window.CYH_REVIEWS = [
       "AutoCAD 查看 T3 楼梯开洞与 T2T3 竣工平面",
       "研究 mcp-for-blender，尝试让 AI 操作 Blender"
     ]
+  },
+  {
+    "id": "r05",
+    "date": "2026-11-05",
+    "type": "daily",
+    "label": "11-05 日报",
+    "moonSub": "补做",
+    "sub": "电脑活跃 5.7 小时 · 切换 61 次 · cyh 到 v5",
+    "headline": "2026-11-05 日报（补做）—— cyh 网站到 v5，工作复盘接上三轨道",
+    "kicker": "Daily Report · 补做",
+    "title": "工作日报 · 2026-11-05",
+    "href": "https://cursor.com/canvas/store-7e786459-5757-43f9-8c11-12c7bc1f48d9/d6d3ce38-3f35-4f87-adcc-4d61efc128c2",
+    "body": [
+      {
+        "t": "p",
+        "s": "电脑活跃 5.7 小时，切换 61 次；上午 AGIBOT（Miro/Teams），下午 Codex 与 cyh 改版；18:49 收工，无加班。"
+      },
+      {
+        "t": "stats",
+        "items": [
+          [
+            "10:19",
+            "开工"
+          ],
+          [
+            "18:49",
+            "最后操作"
+          ],
+          [
+            "5.7h",
+            "电脑活跃",
+            "amber"
+          ],
+          [
+            "61",
+            "应用切换"
+          ]
+        ]
+      },
+      {
+        "t": "sub",
+        "s": "时间去向 · 按项目（分钟）"
+      },
+      {
+        "t": "bar",
+        "l": "Codex",
+        "v": 135,
+        "max": 135,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "AGIBOT",
+        "v": 89,
+        "max": 135,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "Bot 与工具",
+        "v": 82,
+        "max": 135,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "沟通",
+        "v": 24,
+        "max": 135,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "其他",
+        "v": 6,
+        "max": 135,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "产品",
+        "v": 4,
+        "max": 135,
+        "hue": "amber"
+      },
+      {
+        "t": "sub",
+        "s": "一天的形状"
+      },
+      {
+        "t": "li",
+        "items": [
+          "在线约 10:19–18:49，中间多段离开",
+          "无 Blender/Illustrator/CAD/SketchUp",
+          "WPS 只读 CMIP TSC 反馈 pptx"
+        ]
+      },
+      {
+        "t": "sub",
+        "s": "助手协作"
+      },
+      {
+        "t": "li",
+        "items": [
+          "OB导播 #2/#5 复盘数据与字段",
+          "Pinterest打野 #3 同步 170 pins（晚间 #7 排除三画板）",
+          "Codex #4 v5 + #6 三轨道接线",
+          "WorkBuddy 10:22/13:30 有打开记录"
+        ]
+      },
+      {
+        "t": "sub",
+        "s": "待处理（截至写报告时）"
+      },
+      {
+        "t": "li",
+        "items": [
+          "打开 cyh 站点确认三轨道复盘与 v5",
+          "验收 AGIBOT 4F Blender v04 / V04 终章环屏",
+          "回复智元白板 Wuj 两条评论",
+          "确认美的标牌 v26 是否定稿",
+          "确认 CMIP TSC 产品图文板反馈是否需改",
+          "核对 WorkBuddy 自动领积分"
+        ]
+      },
+      {
+        "t": "sub",
+        "s": "小结"
+      },
+      {
+        "t": "kv",
+        "k": "进展",
+        "v": "网站到 v5、三轨道接线"
+      },
+      {
+        "t": "kv",
+        "k": "留意",
+        "v": "Codex 无法分项目、三画板当日同步又删、AGIBOT 未见建模推进"
+      }
+    ],
+    "time": [
+      {
+        "l": "Codex",
+        "min": 135
+      },
+      {
+        "l": "Chrome",
+        "min": 116
+      },
+      {
+        "l": "Grok Bot",
+        "min": 48
+      },
+      {
+        "l": "微信",
+        "min": 13
+      },
+      {
+        "l": "钉钉",
+        "min": 11
+      },
+      {
+        "l": "其他",
+        "min": 17
+      }
+    ],
+    "shape": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      37,
+      47,
+      16,
+      11,
+      43,
+      43,
+      42,
+      60,
+      41,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "todo": [
+      "打开 cyh 站点确认三轨道复盘与 v5",
+      "验收 AGIBOT 4F Blender v04 / V04 终章环屏",
+      "回复智元白板 Wuj 两条评论",
+      "确认美的标牌 v26 是否定稿",
+      "确认 CMIP TSC 产品图文板反馈是否需改",
+      "核对 WorkBuddy 自动领积分"
+    ],
+    "notes": [
+      "cyh 网站第五版上线并接 reviews/boards/projects/plans",
+      "工作复盘三轨道星系接线",
+      "Pinterest 同步 170 pins 后排除好康的/艺术/二次元",
+      "AGIBOT 当天主要在 Miro 与 Teams",
+      "18:49 收工无加班"
+    ]
   }
 ];
