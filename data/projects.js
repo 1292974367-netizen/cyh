@@ -1,7 +1,7 @@
 /* Owner: github收集者. Replace whole object on each weekly update.
  * Plain script (no fetch) so file:// and GitHub Pages both work. See README「Bot 更新约定」. */
 window.CYH_PROJECTS = {
-  "updated": "2026-11-04",
+  "updated": "2026-11-09",
   "cats": [
     [
       "全部",
@@ -30,7 +30,7 @@ window.CYH_PROJECTS = {
       "name": "KimYx0207/AI-Coding-Guide-Zh",
       "note": "中文零基础教程，Codex 和 WorkBuddy 都有学习线和练习",
       "level": "入门",
-      "stars": "约6.4k",
+      "stars": "约6.5k",
       "top": true
     },
     {
@@ -38,14 +38,14 @@ window.CYH_PROJECTS = {
       "name": "AlephAITech/WorkBuddyGuide",
       "note": "《WorkBuddy 实战蓝皮书》，办公、会议、文件案例加指令模板",
       "level": "入门",
-      "stars": "约3.7k"
+      "stars": "约3.8k"
     },
     {
       "cat": "技能包",
       "name": "anthropics/skills",
       "note": "Anthropic 官方技能库，Word/Excel/PPT/PDF 文件技能，还能自己做技能",
       "level": "入门~进阶",
-      "stars": "约18.7万",
+      "stars": "约19.0万",
       "top": true
     },
     {
@@ -60,7 +60,7 @@ window.CYH_PROJECTS = {
       "name": "liuqing0224/interior-design-skills",
       "note": "室内设计全流程 15 个技能，从需求到预算到交付，支持 Codex",
       "level": "进阶",
-      "stars": "11（新项目）",
+      "stars": "13（新项目）",
       "top": true
     },
     {
@@ -68,21 +68,21 @@ window.CYH_PROJECTS = {
       "name": "mhyrr/sketchup-mcp",
       "note": "把 SketchUp 接到 AI 上，一句话建模、改材质",
       "level": "进阶",
-      "stars": "约530"
+      "stars": "约540"
     },
     {
       "cat": "MCP",
       "name": "laowang-wy/adai-sketchup-skill-mcp",
       "note": "中文作者为 Codex 做的 SketchUp 技能加 MCP（Windows、SU 2018/2019）",
       "level": "进阶·备选",
-      "stars": "约90"
+      "stars": "97"
     },
     {
       "cat": "MCP",
       "name": "ahujasid/mcp-for-blender",
       "note": "AI 控制 Blender，搭白模、调灯光、出氛围图",
       "level": "进阶",
-      "stars": "约3.3万"
+      "stars": "约3.4万"
     },
     {
       "cat": "MCP",
@@ -96,14 +96,14 @@ window.CYH_PROJECTS = {
       "name": "Comfy-Org/ComfyUI",
       "note": "主流开源节点式 AI 生图工具，可本地运行",
       "level": "进阶",
-      "stars": "约14.5万"
+      "stars": "约14.6万"
     },
     {
       "cat": "效果图",
       "name": "amir84ferdos/ComfyUI-ArchAi3d-Qwen",
       "note": "室内设计用 ComfyUI 插件，情绪板出图、清理现场、换材质",
       "level": "进阶",
-      "stars": "73"
+      "stars": "72"
     }
   ]
 };
