@@ -1759,5 +1759,230 @@ window.CYH_REVIEWS = [
       "Outlook「已发送邮件」约 26 分钟；17:55 打开过 WeTransfer 下载页",
       "主收工 19:07，19:00 后仍有约 22 分钟；动手设计很少"
     ]
+  },
+  {
+    "id": "r11",
+    "date": "2026-11-11",
+    "type": "daily",
+    "label": "11-11 日报",
+    "moonSub": "OB导播",
+    "sub": "电脑活跃 6.7 小时 · Codex 做出 KeyBridge · AGIBOT 技术标审阅 · 无加班",
+    "headline": "2026-11-11 日报（OB导播）—— 自建 KeyBridge 转换德方 Pitch，审 AGIBOT 技术标",
+    "kicker": "Daily Report · OB导播",
+    "title": "工作日报 · 2026-11-11",
+    "href": "https://cursor.com/canvas/store-7e786459-5757-43f9-8c11-12c7bc1f48d9/dab16171-00d8-44d1-8ae6-c03fc5b8d677",
+    "body": [
+      {
+        "t": "p",
+        "s": "电脑活跃 6.7 小时，切换 119 次。上午用 Codex 做出 Keynote 转换工具 KeyBridge，把德方 AGIBOT CEO Pitch 转成 PPTX/PDF；下午审阅技术标、设计任务书与 3F 视频试片。18:37 收工，无加班。"
+      },
+      {
+        "t": "stats",
+        "items": [
+          [
+            "10:15",
+            "开工"
+          ],
+          [
+            "18:37",
+            "收工"
+          ],
+          [
+            "6.7h",
+            "电脑活跃",
+            "amber"
+          ],
+          [
+            "0",
+            "19:00后分钟"
+          ]
+        ]
+      },
+      {
+        "t": "sub",
+        "s": "时间去向 · 按项目（分钟）"
+      },
+      {
+        "t": "bar",
+        "l": "沟通",
+        "v": 125,
+        "max": 125,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "Codex",
+        "v": 120,
+        "max": 125,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "AGIBOT",
+        "v": 58,
+        "max": 125,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "其他",
+        "v": 35,
+        "max": 125,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "AI 助手",
+        "v": 29,
+        "max": 125,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "KeyBridge",
+        "v": 24,
+        "max": 125,
+        "hue": "amber"
+      },
+      {
+        "t": "bar",
+        "l": "设计任务书",
+        "v": 11,
+        "max": 125,
+        "hue": "amber"
+      },
+      {
+        "t": "sub",
+        "s": "一天的形状"
+      },
+      {
+        "t": "li",
+        "items": [
+          "10:18 下载德方 261110 效果图、CEO Pitch .key 与 3dm 模型",
+          "11:02–12:51 Codex 开发 KeyBridge：网站版、Windows 便携版，AGIBOT Pitch 转 PPTX/PDF",
+          "15:14–16:40 改设计任务书，审 AGIBOT 技术标标书",
+          "下午钉钉查看 3F 即梦 / Seedance 视频试片与德国方案对照 70s"
+        ]
+      },
+      {
+        "t": "sub",
+        "s": "助手协作"
+      },
+      {
+        "t": "li",
+        "items": [
+          "Codex：ChatGPT 窗 120 分钟，交付 KeyBridge 工具",
+          "Gemini 15 / Copilot 5 / WorkBuddy 5 / 豆包 3 分钟",
+          "OB导播：日报改为工作日上午生成"
+        ]
+      },
+      {
+        "t": "sub",
+        "s": "待处理（截至写报告时）"
+      },
+      {
+        "t": "li",
+        "items": [
+          "核对 AGIBOT-KeyBridge.pptx/pdf 与原 Keynote 版式",
+          "查看 261111 AGIBOT Shanghai Showroom Presentation PDF",
+          "确认技术标标书审阅意见是否已反馈",
+          "回看 3F The Egg 露台 Seedance 试片",
+          "设计任务书是否已改完并发出"
+        ]
+      },
+      {
+        "t": "sub",
+        "s": "小结"
+      },
+      {
+        "t": "kv",
+        "k": "进展",
+        "v": "KeyBridge 工具交付；AGIBOT Pitch 转为 PPTX/PDF；技术标与视频试片过审"
+      },
+      {
+        "t": "kv",
+        "k": "留意",
+        "v": "沟通 125 分钟最多；当天无建模软件；下午 Codex 83 分钟无法分项目"
+      }
+    ],
+    "time": [
+      {
+        "l": "Codex",
+        "min": 120
+      },
+      {
+        "l": "钉钉",
+        "min": 83
+      },
+      {
+        "l": "资源管理器",
+        "min": 45
+      },
+      {
+        "l": "微信",
+        "min": 44
+      },
+      {
+        "l": "KeyBridge",
+        "min": 22
+      },
+      {
+        "l": "Acrobat",
+        "min": 19
+      },
+      {
+        "l": "Chrome",
+        "min": 17
+      },
+      {
+        "l": "Gemini",
+        "min": 15
+      },
+      {
+        "l": "其他",
+        "min": 38
+      }
+    ],
+    "shape": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      42,
+      56,
+      35,
+      36,
+      58,
+      59,
+      48,
+      36,
+      33,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "todo": [
+      "核对 AGIBOT-KeyBridge.pptx/pdf 与原 Keynote 版式是否一致",
+      "查看 261111-AGIBOT Shanghai Showroom Presentation PDF",
+      "确认技术标标书 final_vave 审阅意见是否已反馈",
+      "回看 3F The Egg 露台 Seedance 试片与德国方案对照 70s",
+      "设计任务书是否已改完并发出",
+      "决定 KeyBridge 是否给团队共用"
+    ],
+    "notes": [
+      "下载德方 261110 效果图、CEO Pitch Keynote 与 3dm 模型",
+      "用 Codex 开发 Keynote 转换工具 KeyBridge（网站版 + Windows 便携版）",
+      "把 AGIBOT CEO Pitch 转为 PPTX / PDF",
+      "审阅 AGIBOT 技术标标书并修改设计任务书",
+      "查看 3F 即梦 / Seedance 视频试片；18:37 收工，无加班"
+    ]
   }
 ];
