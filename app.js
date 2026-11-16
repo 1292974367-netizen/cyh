@@ -32,7 +32,7 @@
   const pointers = new Map(), buttons = new Map();
   const measure = document.createElement('canvas').getContext('2d');
   let phone = false, frame = null, flight = null, hovered = null, selected = null;
-  let category = '全部', current = null, trail = [], opener = null;
+  let category = '全部', caseCategory = '全部', current = null, trail = [], opener = null;
   let lastTime = 0, sceneTime = 0, lastLayout = -1, layout = [], raf = 0;
   let gesture = null, suppressClickUntil = 0, lastTap = null;
   let dimensions = { w: 0, h: 0 }, focusedGalaxy = null;
@@ -76,7 +76,7 @@
     navigationDepth=scene.galaxies.find(g=>g.key===key)?.z||0;
     if(dialog.open)dialog.close();selected=null;focusedGalaxy=key;
     const pose=scene.focusPose(key);if(pose)flyTo(pose);
-    announce(`正在靠近${({s1:'工作复盘',s2:'视觉灵感',s3:'AI 工作流',s4:'接下来'})[key]}`);
+    announce(`正在靠近${({s1:'工作复盘',s2:'视觉灵感',s3:'AI 工作流',s4:'设计案例',s5:'接下来'})[key]}`);
   }
   function focusReview(id) {
     const review=window.CYH.reviewById.get(id);
@@ -320,17 +320,23 @@
   atlas.addEventListener('gesturestart',e=>{e.preventDefault();safariScale=e.scale;},{passive:false});
   atlas.addEventListener('gesturechange',e=>{e.preventDefault();if(pointers.size<2)zoomAt(safariScale/e.scale,e.clientX||scene.center.x,e.clientY||scene.center.y);safariScale=e.scale;},{passive:false});
 
+  function panelCat(key){return key==='s4'?caseCategory:category;}
   function renderPanel(keepScroll=false){
-    const pn=getPanel(current.k,current.i,category);if(!pn)return;const scroll=content.scrollTop;dialog.style.setProperty('--hue',pn.hue);
+    const pn=getPanel(current.k,current.i,panelCat(current.k));if(!pn)return;const scroll=content.scrollTop;dialog.style.setProperty('--hue',pn.hue);
     document.querySelector('#preview-kicker').textContent=pn.kicker;document.querySelector('#preview-title').textContent=pn.title;content.innerHTML=renderPanelBody(pn);
     const link=document.querySelector('#preview-link');link.hidden=!pn.href;if(pn.href){link.href=pn.href;link.textContent=pn.hrefLabel||'查看原始报告 ↗';}else{link.removeAttribute('href');link.textContent='';}
     backButton.textContent=trail.length?'← 返回上一层':'← 返回星空';content.scrollTop=keepScroll?scroll:0;
   }
   function openPanel(key,index=0,trigger){
-    const next={k:key,i:Number(index)};if(!getPanel(next.k,next.i,category))return;
+    const next={k:key,i:Number(index)};if(!getPanel(next.k,next.i,panelCat(key)))return;
     if(dialog.open&&current)trail.push({...current});else{trail=[];opener=trigger||opener||document.activeElement;}
     current=next;selected=idOf(key,index);renderPanel();if(!dialog.open){dialog.showModal();closeButton.focus({preventScroll:true});}else content.focus({preventScroll:true});
     announce(`已打开${document.querySelector('#preview-title').textContent}预览`);
+  }
+  function setViewerLink(href,label) {
+    const link=document.querySelector('#image-viewer-link');
+    if(href){link.hidden=false;link.href=href;link.textContent=label;}
+    else{link.hidden=true;link.removeAttribute('href');link.textContent='';}
   }
   function renderImage(index) {
     const pin=window.CYH.allPins[index];if(!pin)return;
@@ -341,9 +347,28 @@
     document.querySelector('#image-viewer-board').textContent=`画板 / ${pin.board}`;
     document.querySelector('#image-viewer-title').textContent=pin.title;
     document.querySelector('#image-viewer-counter').textContent=`${imageSelection.position+1} / ${group.length}`;
-    document.querySelector('#image-viewer-link').href=pin.pin_url;
+    imageViewer.style.setProperty('--hue',window.CYH.C.violet);
+    setViewerLink(pin.pin_url,'在 Pinterest 打开 ↗');
+    imageClose.setAttribute('aria-label','关闭大图，返回画板');
     document.querySelector('#image-viewer-prev').disabled=group.length<2;
     document.querySelector('#image-viewer-next').disabled=group.length<2;
+  }
+  function renderCaseImage(id,index) {
+    const item=window.CYH.caseById.get(id);
+    const images=item?.images||[];
+    const image=images[index];
+    if(!item||!image)return;
+    imageSelection={kind:'case',id,index,count:images.length};
+    const img=document.querySelector('#image-viewer-image');
+    img.src=image.file;img.alt=image.caption?`${item.title}：${image.caption}`:item.title;
+    document.querySelector('#image-viewer-board').textContent=item.title;
+    document.querySelector('#image-viewer-title').textContent=image.caption||'';
+    document.querySelector('#image-viewer-counter').textContent=`${index+1} / ${images.length}`;
+    imageViewer.style.setProperty('--hue',window.CYH.C.coral);
+    setViewerLink(item.source?.url,'打开微信原文 ↗');
+    imageClose.setAttribute('aria-label','关闭大图，返回案例');
+    document.querySelector('#image-viewer-prev').disabled=images.length<2;
+    document.querySelector('#image-viewer-next').disabled=images.length<2;
   }
   function openImage(index,trigger) {
     if(!window.CYH.allPins[index])return;
@@ -354,8 +379,19 @@
     imageOpener=trigger||document.activeElement;renderImage(index);
     if(!imageViewer.open)imageViewer.showModal();imageClose.focus({preventScroll:true});
   }
+  function openCaseImage(id,index,trigger) {
+    const item=window.CYH.caseById.get(id);
+    if(!item?.images?.[index])return;
+    imageOpener=trigger||document.activeElement;renderCaseImage(id,index);
+    if(!imageViewer.open)imageViewer.showModal();imageClose.focus({preventScroll:true});
+  }
   function stepImage(direction) {
     if(!imageSelection)return;
+    if(imageSelection.kind==='case'){
+      const count=imageSelection.count;
+      renderCaseImage(imageSelection.id,(imageSelection.index+direction+count)%count);
+      return;
+    }
     const {group,position}=imageSelection;renderImage(group[(position+direction+group.length)%group.length].index);
   }
   imageClose.addEventListener('click',()=>imageViewer.close());
@@ -363,7 +399,10 @@
   document.querySelector('#image-viewer-next').addEventListener('click',()=>stepImage(1));
   imageViewer.addEventListener('cancel',e=>{e.preventDefault();e.stopPropagation();imageViewer.close();});
   imageViewer.addEventListener('close',()=>{
-    const fallback=content.querySelector(`[data-image="${imageSelection?.index}"]`);
+    const selection=imageSelection;
+    const fallback=selection?.kind==='case'
+      ? content.querySelector(`[data-case-id="${selection.id}"][data-case-index="${selection.index}"]`)
+      : content.querySelector(`[data-image="${selection?.index}"]`);
     const returnTo=imageOpener?.isConnected&&dialog.contains(imageOpener)?imageOpener:fallback||closeButton;
     if(dialog.open)returnTo.focus({preventScroll:true});imageSelection=null;
   });
@@ -381,9 +420,11 @@
   document.addEventListener('click',e=>{
     const magnify=e.target.closest('[data-focus-review]');if(magnify){if(atlas.contains(magnify)&&e.detail!==0&&performance.now()<suppressClickUntil)return;focusReview(magnify.dataset.focusReview);return;}
     if(e.target.closest('[data-review-orbits]')){focusGalaxy('s1');return;}
+    const casePicture=e.target.closest('[data-case-id]');if(casePicture){openCaseImage(casePicture.dataset.caseId,Number(casePicture.dataset.caseIndex||0),casePicture);return;}
     const picture=e.target.closest('[data-image]');if(picture){if(atlas.contains(picture)&&e.detail!==0&&performance.now()<suppressClickUntil)return;openImage(Number(picture.dataset.image),picture);return;}
     const nav=e.target.closest('[data-galaxy]');if(nav){focusGalaxy(nav.dataset.galaxy);return;}
     const button=e.target.closest('[data-open]');if(button){if(atlas.contains(button)&&e.detail!==0&&performance.now()<suppressClickUntil)return;previewTarget(button.dataset.open,button.dataset.index||0,button);return;}
+    const caseFilter=e.target.closest('[data-case-category]');if(caseFilter){caseCategory=caseFilter.dataset.caseCategory;renderPanel(true);[...content.querySelectorAll('[data-case-category]')].find(el=>el.dataset.caseCategory===caseCategory)?.focus({preventScroll:true});return;}
     const filter=e.target.closest('[data-category]');if(filter){category=filter.dataset.category;renderPanel(true);[...content.querySelectorAll('[data-category]')].find(el=>el.dataset.category===category)?.focus({preventScroll:true});}
   });
   document.querySelector('#zoom-in').addEventListener('click',()=>zoomAt(.78));document.querySelector('#zoom-out').addEventListener('click',()=>zoomAt(1/.78));document.querySelector('#reset-view').addEventListener('click',()=>reset());

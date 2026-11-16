@@ -1,7 +1,7 @@
 /* cyh · Native perspective universe. No imports, network, or runtime dependencies. */
 (() => {
   'use strict';
-  const { C, boards, pins, projects, plans, moons } = window.CYH;
+  const { C, boards, pins, projects, plans, cases, moons } = window.CYH;
   const TAU = Math.PI * 2;
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const smooth = value => { const t=clamp(value,0,1); return t*t*(3-2*t); };
@@ -12,7 +12,8 @@
     { key:'s1', title:'工作复盘', sub:'01 / REVIEW', caption:'把每一天，留在轨道上。', hue:C.amber, kind:'amber', r:30, rx:200, ry:150 },
     { key:'s2', title:'视觉灵感', sub:'02 / INSPIRATION', caption:`${boards.length} 个画板 · ${window.CYH.allPins.length} 个灵感切片`, hue:C.violet, kind:'violet', r:20, rx:254, ry:158 },
     { key:'s3', title:'AI 工作流', sub:'03 / WORKFLOW', caption:'让工具，成为创作的引力。', hue:C.teal, kind:'teal', r:40, rx:210, ry:94 },
-    { key:'s4', title:'接下来', sub:'04 / YET TO EXPLORE', caption:'尚未点亮的，还有很多。', hue:C.grey, kind:'grey', r:16, rx:146, ry:100 }
+    { key:'s4', title:'设计案例', sub:'04 / CASES', caption:'亮点与可借鉴点。', hue:C.coral, kind:'coral', r:22, rx:200, ry:120 },
+    { key:'s5', title:'接下来', sub:'05 / YET TO EXPLORE', caption:'尚未点亮的，还有很多。', hue:C.grey, kind:'grey', r:16, rx:146, ry:100 }
   ];
 
   class CYHUniverse {
@@ -59,14 +60,14 @@
     }
 
     build() {
-      const desktop = [[-400,-135,0],[315,-135,65],[-190,205,35],[470,220,130]];
-      const portrait = [[-30,-650,0],[20,-215,45],[-20,225,20],[30,655,65]];
+      const desktop = [[-430,-150,0],[80,-165,50],[520,-145,80],[-320,180,40],[420,200,130]];
+      const portrait = [[-30,-700,0],[20,-350,45],[-20,0,20],[25,350,50],[30,700,70]];
       this.galaxies = specs.map((s, i) => {
         const [x,y,z] = (this.phone ? portrait : desktop)[i];
         return { ...s, id:`${s.key}:0`, index:0, main:true, galaxy:s.key, x,y,z,
-          r:this.phone ? [38,38,65,30][i] : s.r,
-          rx:this.phone ? [230,220,235,210][i] : s.rx,
-          ry:this.phone ? [155,155,145,140][i] : s.ry };
+          r:this.phone ? [38,38,65,34,30][i] : s.r,
+          rx:this.phone ? [230,220,235,216,210][i] : s.rx,
+          ry:this.phone ? [155,155,145,150,140][i] : s.ry };
       });
       this.nodes = [];
       const add = (galaxy, key,index,title,sub,angle,rx,ry,r,extra={}) => {
@@ -100,15 +101,18 @@
         this.phone?80:95,this.phone?85:72,5.2));
       const workflow=this.galaxies[2];
       projects.forEach((p,i) => add('s3','gh',i,p.name.split('/')[1]||p.name,p.top?'FIRST PICK':p.cat,i*TAU/Math.max(1,projects.length)-Math.PI/2,workflow.rx,workflow.ry,p.top?7:4.5,{dim:!p.top,priority:p.top?20:1}));
-      const upcoming=this.galaxies[3];
-      plans.forEach(([title],i) => add('s4','plan',i,title,`P.${String(i+1).padStart(2,'0')}`,i*TAU/Math.max(1,plans.length)-2.25,upcoming.rx,upcoming.ry,4.5,{dim:true}));
+      const caseGalaxy=this.galaxies[3];
+      const caseName=id=>(window.CYH.caseCats||[]).find(pair=>pair[0]===id)?.[1]||id||'';
+      (cases||[]).forEach((item,i)=>add('s4','case',i,item.title,caseName(item.category),i*TAU/Math.max(1,cases.length)-Math.PI/2,caseGalaxy.rx,caseGalaxy.ry,6,{priority:10}));
+      const upcoming=this.galaxies[4];
+      plans.forEach(([title],i) => add('s5','plan',i,title,`P.${String(i+1).padStart(2,'0')}`,i*TAU/Math.max(1,plans.length)-2.25,upcoming.rx,upcoming.ry,4.5,{dim:true}));
       this.nodeMap = new Map(this.nodes.map(n=>[n.id,n]));
     }
 
     home() { return { x:0, y:0, z:1000 }; }
 
     shape(g, detail=this.detail) {
-      // The mobile overview has four separate, compact orbits. The inspiration
+      // The mobile overview keeps each galaxy on its own compact orbit. The inspiration
       // orbit unfolds vertically only when approached, making room for its boards.
       if(this.phone&&g.key==='s2')return {rx:lerp(g.rx,170,detail),ry:lerp(g.ry,295,detail)};
       if(this.phone&&g.key==='s1')return {rx:lerp(g.rx,165,detail),ry:lerp(g.ry,205,detail)};
@@ -292,11 +296,11 @@
           ctx.strokeStyle=rgba(C.violet,(kind==='pin'?.25:.15)*center.alpha);ctx.lineWidth=.65;
           ctx.beginPath();group.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});ctx.closePath();ctx.stroke();
         }
-      } else if(g.key==='s3') {
+      } else if(g.key==='s3' || g.key==='s4') {
         this.orbit(g,camera,time,g.rx,g.ry,.21*center.alpha);
         this.orbit(g,camera,time,g.rx+9,g.ry+9,.09*center.alpha,true);
       } else {
-        const group=projected.filter(n=>n.galaxy==='s4'&&!n.main);
+        const group=projected.filter(n=>n.galaxy==='s5'&&!n.main);
         ctx.strokeStyle=rgba(C.grey,.17*center.alpha);ctx.lineWidth=.65;ctx.setLineDash([2,6]);ctx.beginPath();
         group.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});ctx.closePath();ctx.stroke();ctx.setLineDash([]);
         const r=radius*.53;ctx.globalAlpha=.35*center.alpha;
@@ -322,7 +326,8 @@
         const gradient=ctx.createRadialGradient(x-r*.35,y-r*.4,r*.03,x+r*.13,y+r*.14,r*1.18);
         const colors=n.kind==='amber'?['#fff0cb','#edbd79','#b47742','#5d412d','#20232a']:
           n.kind==='teal'?['#d7f6e8','#91e4da','#438c91','#204654','#172634']:
-          n.kind==='violet'?['#f0ebff','#bcb4ff','#8278c2','#494068','#24243c']:['#c3c9d9','#969cb4','#626a86','#3f455f','#242b3c'];
+          n.kind==='violet'?['#f0ebff','#bcb4ff','#8278c2','#494068','#24243c']:
+          n.kind==='coral'?['#ffe8e1','#f0b2a4','#e08a78','#8a4d43','#2c2224']:['#c3c9d9','#969cb4','#626a86','#3f455f','#242b3c'];
         colors.forEach((c,i)=>gradient.addColorStop([0,.26,.58,.84,1][i],c));
         ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();
         ctx.strokeStyle=rgba(n.hue,.35);ctx.lineWidth=.65;ctx.stroke();
@@ -457,7 +462,7 @@
         const reveal=node.main?this.detail:this.detail*(node.galaxy==='s2'&&node.key==='pin'?.65:1);
         const r=node.main?node.r*p.scale*watch.size:lerp(this.phone?1.5:2.05,node.r*p.scale*watch.size,reveal);
         const closeUpAlpha=(options.focusReviewId&&node.reviewId!==options.focusReviewId) ? .16 : 1;
-        const alpha=watch.alpha*(node.main&&node.key==='s4'?.85:1)*this.marginFade(p.y)*(focus&&node.galaxy!==focus?backgroundAlpha:1)*closeUpAlpha;
+        const alpha=watch.alpha*(node.main&&node.key==='s5'?.85:1)*this.marginFade(p.y)*(focus&&node.galaxy!==focus?backgroundAlpha:1)*closeUpAlpha;
         const labelAnchor=node.main?this.project({x:world.x,y:world.y-this.shape(node).ry-55,z:world.z},camera):null;
         return {...node,...p,r,alpha,reveal,world,labelAnchor,visible:p.depth>35&&p.x+r>-20&&p.x-r<this.width+20&&p.y+r>-20&&p.y-r<this.height+20};
       });
