@@ -1,7 +1,7 @@
 /* Owner: github收集者. Replace whole object on each weekly update.
  * Plain script (no fetch) so file:// and GitHub Pages both work. See README「Bot 更新约定」. */
 window.CYH_PROJECTS = {
-  "updated": "2026-11-09",
+  "updated": "2026-11-16",
   "cats": [
     [
       "全部",
@@ -45,7 +45,7 @@ window.CYH_PROJECTS = {
       "name": "anthropics/skills",
       "note": "Anthropic 官方技能库，Word/Excel/PPT/PDF 文件技能，还能自己做技能",
       "level": "入门~进阶",
-      "stars": "约19.0万",
+      "stars": "约19.5万",
       "top": true
     },
     {
@@ -60,7 +60,7 @@ window.CYH_PROJECTS = {
       "name": "liuqing0224/interior-design-skills",
       "note": "室内设计全流程 15 个技能，从需求到预算到交付，支持 Codex",
       "level": "进阶",
-      "stars": "13（新项目）",
+      "stars": "15（新项目）",
       "top": true
     },
     {
@@ -68,21 +68,21 @@ window.CYH_PROJECTS = {
       "name": "mhyrr/sketchup-mcp",
       "note": "把 SketchUp 接到 AI 上，一句话建模、改材质",
       "level": "进阶",
-      "stars": "约540"
+      "stars": "约550"
     },
     {
       "cat": "MCP",
       "name": "laowang-wy/adai-sketchup-skill-mcp",
       "note": "中文作者为 Codex 做的 SketchUp 技能加 MCP（Windows、SU 2018/2019）",
       "level": "进阶·备选",
-      "stars": "97"
+      "stars": "113"
     },
     {
       "cat": "MCP",
       "name": "ahujasid/mcp-for-blender",
       "note": "AI 控制 Blender，搭白模、调灯光、出氛围图",
       "level": "进阶",
-      "stars": "约3.4万"
+      "stars": "约3.5万"
     },
     {
       "cat": "MCP",
@@ -92,11 +92,18 @@ window.CYH_PROJECTS = {
       "stars": "约1.2k"
     },
     {
+      "cat": "MCP",
+      "name": "cl0nazepamm/3dsmax-mcp",
+      "note": "把 3ds Max（2023–2027）接到 AI 上，批量换材质、导入素材、整理场景，支持 Codex",
+      "level": "进阶",
+      "stars": "约390"
+    },
+    {
       "cat": "效果图",
       "name": "Comfy-Org/ComfyUI",
       "note": "主流开源节点式 AI 生图工具，可本地运行",
       "level": "进阶",
-      "stars": "约14.6万"
+      "stars": "约14.7万"
     },
     {
       "cat": "效果图",
