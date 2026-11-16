@@ -4,11 +4,15 @@
 const C = {
   bg: "#0a0f1e", panel: "rgba(13,19,38,0.9)", ink: "#e8ebf5", mute: "#a2aac4", faint: "#69718f",
   rule: "rgba(190,200,240,0.16)", hair: "rgba(190,200,240,0.08)",
-  amber: "#f2b866", violet: "#a9a2ff", teal: "#6fd6d0", grey: "#8a90a6",
+  amber: "#f2b866", violet: "#a9a2ff", teal: "#6fd6d0", coral: "#e08a78", grey: "#8a90a6",
 };
 const projects = window.CYH_PROJECTS?.items || [];
 const cats = window.CYH_PROJECTS?.cats || [];
 const plans = window.CYH_PLANS || [];
+const caseCats = window.CYH_CASES?.cats || [];
+const cases = (window.CYH_CASES?.items || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(a.id).localeCompare(String(b.id)));
+const caseById = new Map(cases.map(item => [item.id, item]));
+const caseCatName = value => caseCats.find(([id]) => id === value)?.[1] || value || "";
 const reviews = window.CYH_REVIEWS || [];
 const reviewById = new Map(reviews.map(review => [review.id, review]));
 const reviewTypes = {daily:"日报", weekly:"周报", monthly:"月报", overview:"全局梳理"};
@@ -101,10 +105,30 @@ function reviewPanel(review) {
   return {hue:C.amber, kicker:review.kicker || reviewTypes[review.type], title:review.title || review.label,
     href:review.href, hrefLabel:'打开原始复盘 ↗', review, body};
 }
+function casePanel(item) {
+  const source = item.source || {};
+  const facts = Array.isArray(item.facts) ? item.facts.filter(pair => Array.isArray(pair) && pair.length >= 2) : [];
+  const body = [
+    {t:'stats', items:[[item.location || '—','地点',C.coral],[item.year || '—','年份'],[item.status || '—','状态',C.coral],[item.area || '—','面积']]},
+    {t:'case-cover', id:item.id}
+  ];
+  if (item.note) body.push({t:'p', s:item.note});
+  if (item.client) body.push({t:'kv', k:'委托方', v:item.client});
+  for (const [label, value] of facts) body.push({t:'kv', k:label, v:value});
+  if (item.highlights?.length) body.push({t:'sub', s:'亮点'}, {t:'li', items:item.highlights});
+  if (item.takeaways?.length) body.push({t:'sub', s:'可借鉴点'}, {t:'li', items:item.takeaways});
+  if (item.images?.length) body.push({t:'sub', s:'图片'}, {t:'case-gallery', id:item.id});
+  const sourceLine = [source.site, source.published].filter(Boolean).join(' · ');
+  if (sourceLine) body.push({t:'kv', k:'来源', v:sourceLine});
+  return {hue:C.coral, kicker:`${caseCatName(item.category)} · ${item.project || ''}`.replace(/ · $/,''), title:item.title,
+    href:source.url || '', hrefLabel:source.url ? '打开微信原文 ↗' : '', body};
+}
 function getPanel(key, index = 0, cat = "全部") {
   const m = typeof key === "object" ? key : {k:key,i:index};
-  if (!m || ((["pin","board","gh","plan"].includes(m.k)) && (!Number.isInteger(m.i) || m.i < 0 || m.i >= ({pin:pins,board:boards,gh:projects,plan:plans}[m.k]).length))) return null;
+  const indexed = {pin:pins, board:boards, gh:projects, plan:plans, case:cases};
+  if (!m || (Object.hasOwn(indexed, m.k) && (!Number.isInteger(m.i) || m.i < 0 || m.i >= indexed[m.k].length))) return null;
   if (reviewById.has(m.k)) return reviewPanel(reviewById.get(m.k));
+  if (caseById.has(m.k)) return casePanel(caseById.get(m.k));
   if (m.k === 's1') return {hue:C.amber,kicker:'01 · Review',title:'工作复盘',body:[
     {t:'p',s:latestReview ? `最新：${latestReview.headline || latestReview.title || latestReview.label}` : '每一份复盘，都留在自己的轨道上。'},
     ...['daily','weekly','monthly','overview'].flatMap(type => [
@@ -142,7 +166,22 @@ function getPanel(key, index = 0, cat = "全部") {
     { t: "p", s: p.note, size: 15, color: C.ink },
     { t: "stats", items: [[p.level, "难度", C.teal], [`★ ${p.stars}`, "Stars"], ...(p.top ? [["首推", "最推荐先试", C.teal]] : [])] },
   ] }; }
-  if (m.k === "s4") return { hue: C.grey, kicker: "04 · 规划中 · Planned", title: "接下来可以加的栏目", body: plans.map(([h, d], i) => ({ t: "row", hue: C.grey, lead: `P.0${i + 1}`, title: h, sub: d, go: { k: "plan", i } })) };
+  if (m.k === "s4") {
+    const active = cat === "全部" || caseCats.some(([id]) => id === cat) ? cat : "全部";
+    const shown = cases.filter(item => active === "全部" || item.category === active);
+    const updated = window.CYH_CASES?.updated;
+    return { hue: C.coral, kicker: "04 · Cases", title: "设计案例", body: [
+      { t: "p", s: "按办公、商业、展陈、住宅分，记亮点与可借鉴点。" },
+      { t: "p", s: `${cases.length} 个案例${updated ? ` · 更新于 ${updated}` : ""}` },
+      { t: "chips", hue: C.coral, items: [
+        { s: `全部 (${cases.length})`, on: active === "全部", category: "全部", caseFilter: true },
+        ...caseCats.map(([id, label]) => ({ s: `${label} (${cases.filter(item => item.category === id).length})`, on: active === id, category: id, caseFilter: true }))
+      ] },
+      ...(shown.length ? shown.map(item => ({ t: "row", hue: C.coral, lead: caseCatName(item.category), title: item.title, sub: [item.location, item.year].filter(Boolean).join(" · "), go: { k: item.id } })) : [{ t: "p", s: "暂无案例", color: C.faint }])
+    ] };
+  }
+  if (m.k === "case") return casePanel(cases[m.i]);
+  if (m.k === "s5") return { hue: C.grey, kicker: "05 · 规划中 · Planned", title: "接下来可以加的栏目", body: plans.map(([h, d], i) => ({ t: "row", hue: C.grey, lead: `P.0${i + 1}`, title: h, sub: d, go: { k: "plan", i } })) };
   if (m.k === "plan") { const [h, d] = plans[m.i]; return { hue: C.grey, kicker: `规划中 · P.0${m.i + 1}`, title: h, body: [{ t: "p", s: d, size: 15, color: C.ink }] }; }
   return null;
 }
@@ -165,12 +204,23 @@ function renderPanelBody(panel) {
       return `<figure class="review-shape"><svg viewBox="0 0 312 94" role="img" aria-label="24 小时活跃时长，单位分钟"><title>${escapeHTML(b.values.map((value,hour) => `${String(hour).padStart(2,'0')}:00 ${value} 分钟`).join('；'))}</title>${b.values.map((value,hour) => `<rect x="${hour*(barWidth+gap)+1}" y="${70-Math.max(1,value/max*60)}" width="${barWidth}" height="${Math.max(1,value/max*60)}" rx="2" fill="${C.amber}" opacity="${value ? .9 : .16}"><title>${String(hour).padStart(2,'0')}:00 · ${value} 分钟</title></rect>`).join('')}${[0,6,12,18,23].map(hour => `<text x="${hour*13+1}" y="89" fill="${C.mute}" font-size="9">${String(hour).padStart(2,'0')}</text>`).join('')}</svg><figcaption>00–23 时 · 每小时活跃分钟</figcaption><details><summary>查看 24 小时数值</summary><p class="preview-p">${escapeHTML(b.values.map((value,hour) => `${String(hour).padStart(2,'0')}:00 · ${value} 分钟`).join(' / '))}</p></details></figure>`;
     }
     if (b.t === "row") return `<button type="button" class="preview-row" ${openAttrs(b.go)}><span class="preview-row-lead" style="color:${b.hue}">${escapeHTML(b.lead)}</span><span class="preview-row-text"><strong>${escapeHTML(b.title)}</strong>${b.sub ? `<small>${escapeHTML(b.sub)}</small>` : ""}</span><span class="preview-row-arrow" aria-hidden="true">↗</span></button>`;
-    if (b.t === "chips") return `<div class="preview-chip-group">${b.label ? `<span class="preview-chip-label">${escapeHTML(b.label)}</span>` : ""}<div class="preview-chips">${b.items.map(it => `<button type="button" class="preview-chip${it.on ? " is-active" : ""}" ${it.go ? openAttrs(it.go) : `data-category="${escapeHTML(it.category)}" aria-pressed="${Boolean(it.on)}"`}>${escapeHTML(it.s)}${it.n ? ` <span>${escapeHTML(it.n)}</span>` : ""}</button>`).join("")}</div></div>`;
+    if (b.t === "chips") return `<div class="preview-chip-group">${b.label ? `<span class="preview-chip-label">${escapeHTML(b.label)}</span>` : ""}<div class="preview-chips">${b.items.map(it => `<button type="button" class="preview-chip${it.on ? " is-active" : ""}" ${it.go ? openAttrs(it.go) : `${it.caseFilter ? "data-case-category" : "data-category"}="${escapeHTML(it.category)}" aria-pressed="${Boolean(it.on)}"`}>${escapeHTML(it.s)}${it.n ? ` <span>${escapeHTML(it.n)}</span>` : ""}</button>`).join("")}</div></div>`;
     if (b.t === "board-covers") return `<section class="board-cover-section"><h4 class="preview-chip-label">${escapeHTML(b.label)}</h4><div class="board-cover-grid">${b.indices.map(i => {
       const board = boards[i], cover = boardPins[i][0];
       return `<button type="button" class="board-cover" ${openAttrs({k:'board', i})}>${cover ? `<img class="board-cover-image" src="${escapeHTML(cover.file)}" alt="${escapeHTML(board.n + '画板预览：' + cover.title)}" loading="lazy" decoding="async" width="240" height="160">` : ''}<span class="board-cover-text"><strong>${escapeHTML(board.n)}</strong><small>${boardPins[i].length} 张图片 · ${escapeHTML(board.g)}</small></span></button>`;
     }).join('')}</div></section>`;
     if (b.t === "gallery") return `<div class="board-gallery" aria-label="${escapeHTML(boards[b.i].n)}的全部图片">${boardPins[b.i].map(pin => `<article class="board-pin"><button type="button" class="board-pin-image" data-image="${pin.index}" aria-label="放大查看：${escapeHTML(pin.title)}" aria-haspopup="dialog" aria-controls="image-viewer"><img src="${escapeHTML(pin.file)}" alt="${escapeHTML(pin.title)}" loading="lazy" decoding="async" width="240" height="240"></button><div class="board-pin-meta"><h4 class="board-pin-title">${escapeHTML(pin.title)}</h4><p class="board-pin-board">所属画板 · ${escapeHTML(pin.board)}</p><a class="pin-source" href="${escapeHTML(pin.pin_url)}" target="_blank" rel="noopener noreferrer">在 Pinterest 打开 <span aria-hidden="true">↗</span></a></div></article>`).join('')}</div>`;
+    if (b.t === "case-cover") {
+      const item = caseById.get(b.id); if (!item) return "";
+      const src = item.cover || item.images?.[0]?.thumb || item.images?.[0]?.file;
+      const caption = item.images?.[0]?.caption || "";
+      if (!src) return "";
+      return `<figure class="preview-image is-cover"><button type="button" class="board-pin-image" data-case-id="${escapeHTML(item.id)}" data-case-index="0" aria-label="放大查看：${escapeHTML(item.title)}" aria-haspopup="dialog" aria-controls="image-viewer"><img src="${escapeHTML(src)}" alt="${escapeHTML(item.title)}" width="1080" height="460"></button>${caption ? `<figcaption>${escapeHTML(caption)}</figcaption>` : ""}</figure>`;
+    }
+    if (b.t === "case-gallery") {
+      const item = caseById.get(b.id); if (!item?.images?.length) return "";
+      return `<div class="board-gallery" aria-label="${escapeHTML(item.title)}的图片">${item.images.map((image, index) => image.thumb ? `<article class="board-pin"><button type="button" class="board-pin-image" data-case-id="${escapeHTML(item.id)}" data-case-index="${index}" aria-label="放大查看：${escapeHTML(image.caption || item.title)}" aria-haspopup="dialog" aria-controls="image-viewer"><img src="${escapeHTML(image.thumb)}" alt="${escapeHTML(image.caption || item.title)}" loading="lazy" decoding="async" width="800" height="888"></button><div class="board-pin-meta"><h4 class="board-pin-title">${escapeHTML(image.caption || "")}</h4></div></article>` : "").join("")}</div>`;
+    }
     if (b.t === "img") {
       const pin = allPins.find(pin => pin.pin_id === pins[b.i].id);
       const image = `<img src="${escapeHTML(pin?.file || images[b.i])}" alt="${escapeHTML(pins[b.i].t + ' · ' + pins[b.i].s)}">`;
@@ -180,10 +230,10 @@ function renderPanelBody(panel) {
   }).join("");
 }
 
-window.CYH = { C, projects, cats, pins, boards, boardPins, allPins, plans, reviews, reviewById, reviewGroups, latestReview, reviewDetails, moons, totalPins, images, getPanel, renderPanelBody, escapeHTML, P, REPO };
+window.CYH = { C, projects, cats, pins, boards, boardPins, allPins, plans, cases, caseById, caseCats, reviews, reviewById, reviewGroups, latestReview, reviewDetails, moons, totalPins, images, getPanel, renderPanelBody, escapeHTML, P, REPO };
 const totals = document.querySelector('.totals');
 if (totals) {
-  const counts = [[reviewGroups.daily.length,'日报','amber'],[boards.length,'画板','violet'],[totalPins,'pins','violet'],[projects.length,'AI 项目','teal'],[plans.length,'规划','grey']];
+  const counts = [[reviewGroups.daily.length,'日报','amber'],[boards.length,'画板','violet'],[totalPins,'pins','violet'],[projects.length,'AI 项目','teal'],[cases.length,'案例','coral'],[plans.length,'规划','grey']];
   totals.setAttribute('aria-label',counts.map(([count,label]) => `${count} ${label}`).join(' · '));
   totals.innerHTML = counts.map(([count,label,hue]) => `<span><b class="${hue}">${String(count).padStart(2,'0')}</b> ${label}</span>`).join('<i>·</i>');
 }

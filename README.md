@@ -8,10 +8,12 @@
 | 工作复盘 | OB导播 | `data/reviews.js` | `window.CYH_REVIEWS = [{ id, date, type, label, moonSub, sub, headline, kicker, title, href, body, time, shape, todo, notes }]` |
 | 视觉灵感 | Pinterest打野 | `data/boards.js` + `assets/boards/pins-manifest.json` + `assets/boards/pins-data.js` + `assets/boards/<slug>/<pin_id>.jpg` | `window.CYH_BOARDS = { updated, boards: [{ n, slug, p, g, c }], featured: [{ t, s, id }] }`；pin 记录为 `{ board, pin_id, title, file, slug, pin_url }` |
 | AI 工作流 | github收集者 | `data/projects.js` | `window.CYH_PROJECTS = { updated, cats: [[值, 显示名]], items: [{ cat, name, note, level, stars, top? }] }` |
+| 设计案例 | OB导播 | `data/cases.js` + `assets/cases/<slug>/` | `window.CYH_CASES = { updated, cats, items: [见下方 schema] }` |
 | 后续规划 | 任一 bot / 手动 | `data/plans.js` | `window.CYH_PLANS = [[标题, 说明]]` |
 
 - 复盘：`id` 唯一（如 `r05`），`date` 为 `YYYY-MM-DD`，`type` 为 `daily` / `weekly` / `monthly` / `overview`。日报在外圈、周报在中圈、月报在内圈；无记录时保留空轨道，全局梳理独立显示。`body` 由块组成：`{t:"p",s}`、`{t:"sub",s}`、`{t:"stats",items:[[值,标签,颜色?]]}`、`{t:"bar",l,v,max,hue}`、`{t:"li",items}`、`{t:"kv",k,v}`。颜色写名字：`amber` / `violet` / `teal` / `grey` / `faint`。日期最新的日报会自动标成 LATEST；月亮、时间线、页脚计数、轨道角度都从数据自动生成。
 - 日报卫星：`time: [{l:"应用或项目",min:分钟数}]`，`shape: [24 个每小时活跃分钟数]`，`todo` / `notes` 为文字数组。点日报旁的 `+` 或向日报缩放可展开卫星，缩小收回；空数组、缺失字段、全零 shape 不生成卫星。点日报可查看该条完整详情。
+- 设计案例：日常追加案例只改 `data/cases.js` 和 `assets/cases/<slug>/`。`id` 递增（`c02`…），`slug` 用英文短横线，`date` 为写入网站的日期 `YYYY-MM-DD`，`category` 必须是 `cats` 里的值。条目字段：`id, slug, date, title, titleEn, project, category, location, year, status, architects, client, area, cover, source, images[{file,thumb,caption}], tags, note, highlights, takeaways, facts`。图片用仓库内相对路径；`original/` 不入库。本次是板块首建，允许改框架文件。
 - 视觉灵感保留现有 10 个画板。展示层排除已删除的 `haokang` / `art` / `anime`，即使上游快照仍含旧记录也不会恢复。
 - `pins-data.js` 必须和 `pins-manifest.json` 内容一致（`window.CYH_PIN_MANIFEST = <manifest JSON>;`）。
 
