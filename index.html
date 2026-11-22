@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#0a0f1e">
-  <meta name="description" content="cyh 的灵感知识库 —— 设计师的个人星图：工作复盘、视觉灵感、AI 工作流、设计案例、后续规划。">
-  <title>cyh 的灵感知识库</title>
+  <meta name="theme-color" content="#050814">
+  <meta name="description" content="cyh 的灵感知识库 —— 设计师的 3D 造物星系：灵感星云、造物引擎、创作恒星、凝固空间、未知信标。">
+  <title>cyh 的灵感知识库 · 3D 星图</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%230a0f1e'/%3E%3Ccircle cx='20' cy='20' r='8' fill='%23f2b866'/%3E%3Ccircle cx='20' cy='20' r='14' fill='none' stroke='%23f2b866' stroke-opacity='.4'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <script src="three.min.js" defer></script>
   <script src="assets/boards/pins-data.js" defer></script>
   <script src="data/reviews.js" defer></script>
   <script src="data/boards.js" defer></script>
@@ -16,43 +17,73 @@
   <script src="data/plans.js" defer></script>
   <script src="data/cases.js" defer></script>
   <script src="content.js" defer></script>
-  <script src="universe.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="cosmos-ui.js" defer></script>
+  <script src="cosmos-core.js" defer></script>
+  <script src="cosmos-bodies-a.js" defer></script>
+  <script src="cosmos-bodies-b.js" defer></script>
+  <script src="cosmos-camera.js" defer></script>
+  <script src="cosmos-story.js" defer></script>
 </head>
 <body>
   <div class="site" id="site">
     <header class="masthead">
       <div class="wordmark" aria-label="cyh">cyh<span class="wordmark-star" aria-hidden="true">✳</span></div>
-      <h1>灵感知识库 <span>—— 设计师的个人星图：</span></h1>
-      <p>工作复盘、视觉灵感、AI 工作流、设计案例、后续规划。</p>
-      <div class="edition">VOL.05 <i></i> 2026.11 <i></i> 展厅 / 展示 / 室内 · AI</div>
+      <h1>灵感知识库 <span>—— 设计师的 3D 造物星系</span></h1>
+      <p>灵感尘埃 → 造物引擎 → 创作脉搏 → 凝固空间 → 未知星域</p>
+      <div class="edition">VOL.06 <i></i> 2026.11 <i></i> 展厅 / 展示 / 室内 · AI</div>
     </header>
-    <div class="atlas-note" aria-hidden="true"><span>PERSONAL ATLAS</span><span>散落的灵感，在这里连成星系。</span></div>
-    <main class="atlas" aria-label="个人灵感星图">
+
+    <div class="atlas-note">
+      <div class="atlas-note-copy" aria-hidden="true">
+        <span>PERSONAL COSMOS · 3D</span>
+        <span>散落的灵感，在这里坍缩成空间。</span>
+      </div>
+      <button type="button" id="tour-start" class="tour-trigger" aria-label="开始五章叙事巡航">
+        <span aria-hidden="true">✦</span> 叙事巡航
+      </button>
+    </div>
+
+    <main class="atlas" aria-label="3D 个人灵感星图">
       <canvas id="universe-canvas" aria-hidden="true"></canvas>
-      <div id="map-images" role="group" aria-label="画板图片卫星，点击放大"></div>
-      <div id="map-labels" role="group" aria-label="工作复盘、视觉灵感、AI 工作流、设计案例与接下来，点击天体查看预览"></div>
+      <div id="map-labels" role="group" aria-label="五大星系与天体节点，点击飞近查看"></div>
+      <div id="cos-tooltip" class="cos-tooltip" hidden></div>
     </main>
-    <nav id="galaxy-nav" class="galaxy-nav" aria-label="飞往星系">
-      <button type="button" data-galaxy="s1" style="--hue:var(--amber)" aria-label="飞往工作复盘星系"><i aria-hidden="true"></i>复盘</button>
-      <button type="button" data-galaxy="s2" style="--hue:var(--violet)" aria-label="飞往视觉灵感星系"><i aria-hidden="true"></i>灵感</button>
-      <button type="button" data-galaxy="s3" style="--hue:var(--teal)" aria-label="飞往 AI 工作流星系"><i aria-hidden="true"></i>工作流</button>
-      <button type="button" data-galaxy="s4" style="--hue:var(--coral)" aria-label="飞往设计案例星系"><i aria-hidden="true"></i>案例</button>
-      <button type="button" data-galaxy="s5" style="--hue:var(--grey)" aria-label="飞往接下来星系"><i aria-hidden="true"></i>接下来</button>
+
+    <aside id="topics" class="topics-bar" aria-label="跨星系项目星座"></aside>
+    <aside id="topic-card" class="topic-card" aria-label="星座详情" hidden></aside>
+    <aside id="tour-card" class="tour-card" aria-label="叙事巡航导览" hidden></aside>
+
+    <nav id="galaxy-nav" class="galaxy-nav" aria-label="飞往星系（按造物叙事排序）">
+      <button type="button" data-galaxy="s2" style="--hue:var(--violet)" aria-label="飞往 I 灵感星云"><i aria-hidden="true"></i><span>I</span>灵感</button>
+      <button type="button" data-galaxy="s3" style="--hue:var(--teal)" aria-label="飞往 II 造物引擎"><i aria-hidden="true"></i><span>II</span>引擎</button>
+      <button type="button" data-galaxy="s1" style="--hue:var(--amber)" aria-label="飞往 III 创作恒星"><i aria-hidden="true"></i><span>III</span>恒星</button>
+      <button type="button" data-galaxy="s4" style="--hue:var(--coral)" aria-label="飞往 IV 凝固空间"><i aria-hidden="true"></i><span>IV</span>空间</button>
+      <button type="button" data-galaxy="s5" style="--hue:var(--grey)" aria-label="飞往 V 未知信标"><i aria-hidden="true"></i><span>V</span>信标</button>
     </nav>
+
     <div id="view-controls" class="view-controls" role="group" aria-label="宇宙视野">
-      <button type="button" id="zoom-out" aria-label="缩小">−</button>
+      <button type="button" id="zoom-out" aria-label="拉远">−</button>
       <output id="zoom-level" aria-label="缩放倍数">1.0×</output>
-      <button type="button" id="zoom-in" aria-label="放大">+</button>
+      <button type="button" id="zoom-in" aria-label="拉近">+</button>
       <span class="control-divider" aria-hidden="true"></span>
       <button type="button" id="reset-view" aria-label="返回全景">全景 ↗</button>
     </div>
+
     <p id="view-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+
     <footer class="footer">
-      <div class="totals" aria-label="内容统计"><span>正在展开星图…</span></div>
-      <div class="legend"><span class="legend-orbit" aria-hidden="true"></span><span><span class="desktop-hint">滚轮缩放 · 拖动漫游 · 双击归航</span><span class="mobile-hint"><span>双指缩放 · 单指漫游</span><span>双击归航</span></span><small>点击天体探索 · ESC 返回全景</small></span></div>
+      <div class="totals" aria-label="内容统计"><span>正在展开 3D 星系…</span></div>
+      <div class="legend">
+        <span class="legend-orbit" aria-hidden="true"></span>
+        <span>
+          <span class="desktop-hint">左键 3D 旋转 · 右键平移 · 滚轮缩放 · 双击全景</span>
+          <span class="mobile-hint"><span>单指 3D 旋转 · 双指缩放</span><span>双击全景</span></span>
+          <small>点击星体或星座探索 · ESC 返回</small>
+        </span>
+      </div>
     </footer>
   </div>
+
   <dialog id="preview" class="preview" aria-labelledby="preview-title">
     <div class="sheet-handle" aria-hidden="true"></div>
     <header class="preview-header">
@@ -60,12 +91,13 @@
       <button type="button" id="preview-close" class="icon-button" aria-label="关闭预览">✕</button>
     </header>
     <div id="preview-content" class="preview-content" tabindex="0" aria-label="预览正文"></div>
-    <footer class="preview-footer"><button type="button" id="preview-back">← 返回星图</button><a id="preview-link" target="_blank" rel="noopener noreferrer" hidden></a></footer>
+    <footer class="preview-footer"><button type="button" id="preview-back">← 返回星空</button><a id="preview-link" target="_blank" rel="noopener noreferrer" hidden></a></footer>
   </dialog>
+
   <dialog id="image-viewer" class="image-viewer" aria-labelledby="image-viewer-title">
     <header class="image-viewer-header">
       <p id="image-viewer-board"></p>
-      <button type="button" id="image-viewer-close" class="icon-button" aria-label="关闭大图，返回画板">✕</button>
+      <button type="button" id="image-viewer-close" class="icon-button" aria-label="关闭大图">✕</button>
     </header>
     <div class="image-viewer-stage">
       <button type="button" id="image-viewer-prev" class="icon-button" aria-label="上一张图片">‹</button>
@@ -77,6 +109,7 @@
       <div><span id="image-viewer-counter" aria-live="polite"></span><a id="image-viewer-link" class="pin-source" target="_blank" rel="noopener noreferrer">在 Pinterest 打开 ↗</a></div>
     </footer>
   </dialog>
-  <noscript><p class="noscript">请在浏览器中启用 JavaScript，以探索这张星图。</p></noscript>
+
+  <noscript><p class="noscript">请在浏览器中启用 JavaScript，以探索这座 3D 星系。</p></noscript>
 </body>
 </html>
