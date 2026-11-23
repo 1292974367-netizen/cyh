@@ -1,11 +1,15 @@
 /* Owner: github收集者. Replace whole object on each weekly update.
  * Plain script (no fetch) so file:// and GitHub Pages both work. See README「Bot 更新约定」. */
 window.CYH_PROJECTS = {
-  "updated": "2026-11-16",
+  "updated": "2026-11-23",
   "cats": [
     [
       "全部",
       "All"
+    ],
+    [
+      "日常工具",
+      "日常工具"
     ],
     [
       "入门",
@@ -26,6 +30,22 @@ window.CYH_PROJECTS = {
   ],
   "items": [
     {
+      "cat": "日常工具",
+      "name": "localsend/localsend",
+      "note": "像跨系统的 AirDrop，iPhone、Windows、Mac 局域网互传文件，不用账号",
+      "level": "入门",
+      "stars": "约10.0万",
+      "top": true
+    },
+    {
+      "cat": "日常工具",
+      "name": "Stirling-Tools/Stirling-PDF",
+      "note": "本地 PDF 工具箱，可合并、拆分、加水印；压缩和转 Word 等需另接服务",
+      "level": "入门",
+      "stars": "约9.7万",
+      "top": true
+    },
+    {
       "cat": "入门",
       "name": "KimYx0207/AI-Coding-Guide-Zh",
       "note": "中文零基础教程，Codex 和 WorkBuddy 都有学习线和练习",
@@ -38,20 +58,19 @@ window.CYH_PROJECTS = {
       "name": "AlephAITech/WorkBuddyGuide",
       "note": "《WorkBuddy 实战蓝皮书》，办公、会议、文件案例加指令模板",
       "level": "入门",
-      "stars": "约3.8k"
+      "stars": "约3.9k"
     },
     {
       "cat": "技能包",
       "name": "anthropics/skills",
       "note": "Anthropic 官方技能库，Word/Excel/PPT/PDF 文件技能，还能自己做技能",
       "level": "入门~进阶",
-      "stars": "约19.5万",
-      "top": true
+      "stars": "约19.9万"
     },
     {
       "cat": "技能包",
       "name": "jnMetaCode/agency-agents-zh",
-      "note": "300+ 个中文 AI 专家角色，有项目管理部和会议纪要专家",
+      "note": "328 个中文 AI 专家角色，有项目管理部和会议纪要专家",
       "level": "入门",
       "stars": "约2.2万"
     },
@@ -60,22 +79,21 @@ window.CYH_PROJECTS = {
       "name": "liuqing0224/interior-design-skills",
       "note": "室内设计全流程 15 个技能，从需求到预算到交付，支持 Codex",
       "level": "进阶",
-      "stars": "15（新项目）",
-      "top": true
+      "stars": "19（新项目）"
     },
     {
       "cat": "MCP",
       "name": "mhyrr/sketchup-mcp",
       "note": "把 SketchUp 接到 AI 上，一句话建模、改材质",
       "level": "进阶",
-      "stars": "约550"
+      "stars": "约560"
     },
     {
       "cat": "MCP",
       "name": "laowang-wy/adai-sketchup-skill-mcp",
       "note": "中文作者为 Codex 做的 SketchUp 技能加 MCP（Windows、SU 2018/2019）",
       "level": "进阶·备选",
-      "stars": "113"
+      "stars": "116"
     },
     {
       "cat": "MCP",
@@ -92,18 +110,11 @@ window.CYH_PROJECTS = {
       "stars": "约1.2k"
     },
     {
-      "cat": "MCP",
-      "name": "cl0nazepamm/3dsmax-mcp",
-      "note": "把 3ds Max（2023–2027）接到 AI 上，批量换材质、导入素材、整理场景，支持 Codex",
-      "level": "进阶",
-      "stars": "约390"
-    },
-    {
       "cat": "效果图",
       "name": "Comfy-Org/ComfyUI",
       "note": "主流开源节点式 AI 生图工具，可本地运行",
       "level": "进阶",
-      "stars": "约14.7万"
+      "stars": "约14.8万"
     },
     {
       "cat": "效果图",
